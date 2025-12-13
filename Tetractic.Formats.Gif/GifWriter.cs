@@ -349,6 +349,7 @@ public sealed class GifWriter : IDisposable
     ///     Image Data can be written.</exception>
     /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
     // ExceptionAdjustment: M:System.IO.Stream.Write(System.ReadOnlySpan{System.Byte}) -T:System.NotSupportedException
+    // ExceptionAdjustment: M:System.IO.Stream.WriteByte(System.Byte) -T:System.NotSupportedException
     public void WriteImageData(ReadOnlySpan<byte> imageData)
     {
         if (_state != State.ImageData)
@@ -361,10 +362,12 @@ public sealed class GifWriter : IDisposable
         for (int i = 0; i < imageData.Length; ++i)
             usedBits |= imageData[i];
 
-        int minCodeSize = 8 - byte.LeadingZeroCount(usedBits);
+        byte minCodeSize = byte.Max(2, (byte)(8 - byte.LeadingZeroCount(usedBits)));
 
         try
         {
+            _stream.WriteByte(minCodeSize);
+
             WriteImageDataCore(imageData, minCodeSize, _stream);
 
             _state = State.BlockLabel;
@@ -772,11 +775,11 @@ public sealed class GifWriter : IDisposable
     /// <exception cref="IOException"/>
     // ExceptionAdjustment: M:System.IO.Stream.Write(System.ReadOnlySpan{System.Byte}) -T:System.NotSupportedException
     // ExceptionAdjustment: M:System.IO.Stream.WriteByte(System.Byte) -T:System.NotSupportedException
-    private static void WriteImageDataCore(ReadOnlySpan<byte> imageData, int minCodeSize, Stream stream)
+    private static void WriteImageDataCore(ReadOnlySpan<byte> imageData, byte rawCodeSize, Stream stream)
     {
-        int rawCodeSize = int.Max(2, minCodeSize);
-
-        stream.WriteByte((byte)rawCodeSize);
+        // Raw codes are from 0 to (1 << rawCodeSize) - 1.
+        // Clear code is 1 << rawCodeSize.
+        // End code is 1 << rawCodeSize + 1.
 
         uint endCode = (1u << rawCodeSize) + 1;
 

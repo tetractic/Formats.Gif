@@ -433,10 +433,16 @@ public sealed class GifReader : IDisposable
         if (_state != State.ImageData)
             throw new InvalidOperationException();
 
+        byte[] imageData = new byte[_width * _height];
+
         try
         {
-            byte[] imageData = new byte[_width * _height];
-            ReadImageDataCore(_stream, imageData);
+            byte rawCodeSize = ReadByteExactly(_stream);
+
+            if (rawCodeSize < 2 || rawCodeSize > 8)
+                throw new InvalidDataException("Invalid LZW code size.");
+
+            ReadImageDataCore(_stream, rawCodeSize, imageData);
 
             _state = State.BlockLabel;
 
@@ -794,12 +800,8 @@ public sealed class GifReader : IDisposable
     /// <exception cref="InvalidDataException"/>
     /// <exception cref="EndOfStreamException"/>
     /// <exception cref="IOException"/>
-    private static void ReadImageDataCore(Stream stream, Span<byte> imageData)
+    private static void ReadImageDataCore(Stream stream, byte rawCodeSize, Span<byte> imageData)
     {
-        byte rawCodeSize = ReadByteExactly(stream);
-        if (rawCodeSize < 2 || rawCodeSize > 8)
-            throw new InvalidDataException("Invalid LZW code size.");
-
         // Raw codes are from 0 to (1 << rawCodeSize) - 1.
         // Clear code is 1 << rawCodeSize.
         // End code is 1 << rawCodeSize + 1.
