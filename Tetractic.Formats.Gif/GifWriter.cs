@@ -54,19 +54,19 @@ namespace Tetractic.Formats.Gif;
 ///   │  └─┬──────────────────────┘       │
 ///   │    ▼  ┌◄──┐                       │
 ///   │  ┌─┴──┴─┐ │                       │
-///   │  │ Data ├─┴──────────────────────►┤  WriteBlock(…) and
+///   │  │ Data ├─┴──────────────────────►┤  WriteSubblock(…) and
 ///   │  └──────┘                         ▲  WriteBlockTerminator()
 ///   │                                   │
 ///   │ 80-F9: Control blocks             │
 ///   │                                   │
 ///   │  ┌─────────────────────────────┐  │
-///   ├─►┤ 21 F9: Graphic Control Ext. ├─►┤  WriteGraphicControlExtension(…)
-///   │  └─────────────────────────────┘  ▲
+///   ├─►┤ 21 F9: Graphic Control Ext. ├─►┤  WriteGraphicControlExtension(…) and
+///   │  └─────────────────────────────┘  ▲  WriteBlockTerminator()
 ///   │                                   │
 ///   │ FA-FF: Special Purpose blocks     │
 ///   │                           ┌◄──┐   │
 ///   │  ┌────────────────────────┴─┐ │   │  WriteExtensionLabel(…),
-///   ├─►┤ 21 FE: Comment Ext. Data ├─┴──►┤  WriteBlock(…), and
+///   ├─►┤ 21 FE: Comment Ext. Data ├─┴──►┤  WriteSubblock(…), and
 ///   │  └──────────────────────────┘     ▲  WriteBlockTerminator()
 ///   │                                   │
 ///   │  ┌─────────────────────────┐      │
@@ -74,7 +74,7 @@ namespace Tetractic.Formats.Gif;
 ///   │  └─┬───────────────────────┘      │
 ///   │    ▼  ┌◄──┐                       │
 ///   │  ┌─┴──┴─┐ │                       │
-///   │  │ Data ├─┴───────────────────────┘  WriteBlock(…) and
+///   │  │ Data ├─┴───────────────────────┘  WriteSubblock(…) and
 ///   │  └──────┘                            WriteBlockTerminator()
 ///   ▼
 /// ┌─┴───────────┐
@@ -345,6 +345,8 @@ public sealed class GifWriter : IDisposable
     /// </summary>
     /// <param name="imageData">The image data, which must already be interlaced if applicable.
     ///     </param>
+    /// <exception cref="InvalidOperationException">The length of <paramref name="imageData"/> does
+    ///     not match the dimensions that were specified in the Image Descriptor.</exception>
     /// <exception cref="InvalidOperationException">The writer is not in a state where Table-Based
     ///     Image Data can be written.</exception>
     /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
@@ -388,8 +390,8 @@ public sealed class GifWriter : IDisposable
     ///     label can be written.</exception>
     /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
     /// <remarks>
-    /// Use <see cref="WriteBlock(ReadOnlySpan{byte})"/> and <see cref="WriteBlockTerminator"/> to
-    /// write the block and sub-blocks of the extension.
+    /// Use <see cref="WriteSubblock(ReadOnlySpan{byte})"/> and <see cref="WriteBlockTerminator"/>
+    /// to write the sub-blocks of the block.
     /// </remarks>
     // ExceptionAdjustment: M:System.IO.Stream.Write(System.ReadOnlySpan{System.Byte}) -T:System.NotSupportedException
     public void WriteExtensionLabel(GifExtensionLabel label)
@@ -426,7 +428,7 @@ public sealed class GifWriter : IDisposable
 
             _stream.Write(buffer);
 
-            _state = State.Block;
+            _state = State.Subblock0;
         }
         catch
         {
@@ -437,21 +439,21 @@ public sealed class GifWriter : IDisposable
     }
 
     /// <summary>
-    /// Writes a block or sub-block.
+    /// Writes a sub-block.
     /// </summary>
-    /// <param name="data">The block or sub-block data.</param>
+    /// <param name="data">The sub-block data.</param>
     /// <exception cref="ArgumentException">The length of <paramref name="data"/> is 0 or is greater
     ///     than 255.</exception>
-    /// <exception cref="InvalidOperationException">The writer is not in a state where a block or
-    ///     sub-block can be written.</exception>
+    /// <exception cref="InvalidOperationException">The writer is not in a state where a sub-block
+    ///     can be written.</exception>
     /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
     // ExceptionAdjustment: M:System.IO.Stream.Write(System.ReadOnlySpan{System.Byte}) -T:System.NotSupportedException
-    public void WriteBlock(ReadOnlySpan<byte> data)
+    public void WriteSubblock(ReadOnlySpan<byte> data)
     {
         if (data.Length == 0 || data.Length > byte.MaxValue)
             throw new ArgumentException("Invalid length.", nameof(data));
 
-        if (_state != State.Block && _state != State.Subblock)
+        if (_state != State.Subblock0 && _state != State.Subblocks)
             throw new InvalidOperationException();
 
         try
@@ -463,7 +465,7 @@ public sealed class GifWriter : IDisposable
 
             _stream.Write(block);
 
-            _state = State.Subblock;
+            _state = State.Subblocks;
         }
         catch
         {
@@ -482,7 +484,7 @@ public sealed class GifWriter : IDisposable
     // ExceptionAdjustment: M:System.IO.Stream.WriteByte(System.Byte) -T:System.NotSupportedException
     public void WriteBlockTerminator()
     {
-        if (_state != State.Block && _state != State.Subblock)
+        if (_state != State.Subblock0 && _state != State.Subblocks)
             throw new InvalidOperationException();
 
         try
@@ -500,9 +502,9 @@ public sealed class GifWriter : IDisposable
     }
 
     /// <summary>
-    /// Writes a Graphic Control Extension.
+    /// Writes the extension label and first sub-block of a Graphic Control Extension.
     /// </summary>
-    /// <param name="extension">The extension.</param>
+    /// <param name="extension">The sub-block.</param>
     /// <exception cref="InvalidOperationException">The writer is not in a state where a Graphic
     ///     Control Extension can be written.</exception>
     /// <exception cref="InvalidOperationException">The extensions is not supported by the GIF
@@ -511,7 +513,8 @@ public sealed class GifWriter : IDisposable
     ///     supported by the GIF version.</exception>
     /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
     /// <remarks>
-    /// This extension has no sub-blocks and the block terminator is written by this method.
+    /// Use <see cref="WriteSubblock(ReadOnlySpan{byte})"/> and <see cref="WriteBlockTerminator"/>
+    /// to write the sub-blocks of the block.  There should be none.
     /// </remarks>
     // ExceptionAdjustment: M:System.IO.Stream.Write(System.ReadOnlySpan{System.Byte}) -T:System.NotSupportedException
     public void WriteGraphicControlExtension(GifGraphicControlExtension extension)
@@ -534,7 +537,7 @@ public sealed class GifWriter : IDisposable
 
         try
         {
-            Span<byte> buffer = stackalloc byte[2 + 5 + 1];
+            Span<byte> buffer = stackalloc byte[2 + 5];
 
             buffer[0] = (byte)GifBlockLabel.ExtensionIntroducer;
             buffer[1] = (byte)GifExtensionLabel.GraphicControl;
@@ -546,13 +549,9 @@ public sealed class GifWriter : IDisposable
             BinaryPrimitives.WriteUInt16LittleEndian(block.Slice(2), extension.DelayTime);
             block[4] = extension.TransparentColorIndex;
 
-            block = buffer.Slice(2 + 5, 1);
-
-            block[0] = 0;  // Block Terminator
-
             _stream.Write(buffer);
 
-            _state = State.BlockLabel;
+            _state = State.Subblocks;
         }
         catch
         {
@@ -563,17 +562,17 @@ public sealed class GifWriter : IDisposable
     }
 
     /// <summary>
-    /// Writes a Plain Text Extension block.
+    /// Writes the extension label and the first sub-block of a Plain Text Extension.
     /// </summary>
-    /// <param name="extension">The extension.</param>
+    /// <param name="extension">The sub-block.</param>
     /// <exception cref="InvalidOperationException">The writer is not in a state where a Plain Text
     ///     Extension can be written.</exception>
     /// <exception cref="InvalidOperationException">The extension is not supported by the GIF
     ///     version.</exception>
     /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
     /// <remarks>
-    /// Use <see cref="WriteBlock(ReadOnlySpan{byte})"/> and <see cref="WriteBlockTerminator"/> to
-    /// write the sub-blocks of the extension, which contain the text data.
+    /// Use <see cref="WriteSubblock(ReadOnlySpan{byte})"/> and <see cref="WriteBlockTerminator"/>
+    /// to write the sub-blocks of the block, which contain the text data.
     /// </remarks>
     // ExceptionAdjustment: M:System.IO.Stream.Write(System.ReadOnlySpan{System.Byte}) -T:System.NotSupportedException
     public void WritePlainTextExtension(GifPlainTextExtension extension)
@@ -608,7 +607,7 @@ public sealed class GifWriter : IDisposable
 
             _stream.Write(buffer);
 
-            _state = State.Subblock;
+            _state = State.Subblocks;
         }
         catch
         {
@@ -619,7 +618,7 @@ public sealed class GifWriter : IDisposable
     }
 
     /// <summary>
-    /// Writes an Application Extension block.
+    /// Writes the the extension label and first sub-block of an Application Extension.
     /// </summary>
     /// <param name="applicationIdentifier">The application identifier.</param>
     /// <param name="applicationAuthenticationCode">The application authentication code.</param>
@@ -633,8 +632,8 @@ public sealed class GifWriter : IDisposable
     ///     version.</exception>
     /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
     /// <remarks>
-    /// Use <see cref="WriteBlock(ReadOnlySpan{byte})"/> and <see cref="WriteBlockTerminator"/> to
-    /// write the sub-blocks of the extension, which contain the application data.
+    /// Use <see cref="WriteSubblock(ReadOnlySpan{byte})"/> and <see cref="WriteBlockTerminator"/>
+    /// to write the sub-blocks of the block, which contain the application data.
     /// </remarks>
     /// <seealso cref="WriteNetscapeApplicationExtensionSubblock"/>
     // ExceptionAdjustment: M:System.IO.Stream.Write(System.ReadOnlySpan{System.Byte}) -T:System.NotSupportedException
@@ -669,7 +668,7 @@ public sealed class GifWriter : IDisposable
 
             _stream.Write(buffer);
 
-            _state = State.Subblock;
+            _state = State.Subblocks;
         }
         catch
         {
@@ -680,13 +679,13 @@ public sealed class GifWriter : IDisposable
     }
 
     /// <summary>
-    /// Writes a Netscape 2.0 Application Extension sub-block.
+    /// Writes a sub-block of a Netscape 2.0 Application Extension.
     /// </summary>
     /// <param name="subblock">The sub-block.</param>
     /// <exception cref="ArgumentNullException"><paramref name="subblock"/> is
     ///     <see langword="null"/>.</exception>
-    /// <exception cref="InvalidOperationException">The writer is not in a state where a Netscape
-    ///     2.0 Application Extension sub-block can be written.</exception>
+    /// <exception cref="InvalidOperationException">The writer is not in a state where a sub-block
+    ///     of an Application Extension can be written.</exception>
     /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
     // ExceptionAdjustment: M:System.IO.Stream.Write(System.ReadOnlySpan{System.Byte}) -T:System.NotSupportedException
     // ExceptionAdjustment: M:System.IO.Stream.WriteByte(System.Byte) -T:System.NotSupportedException
@@ -696,7 +695,7 @@ public sealed class GifWriter : IDisposable
 
         // https://github.com/mozilla/gecko-dev/blob/5836a062726f715fda621338a17b51aff30d0a8c/image/decoders/nsGIFDecoder2.cpp#L761
 
-        if (_state != State.Subblock ||
+        if (_state != State.Subblocks ||
             _blockLabel != GifBlockLabel.ExtensionIntroducer ||
             _extensionLabel != GifExtensionLabel.Application)
         {
@@ -921,8 +920,8 @@ public sealed class GifWriter : IDisposable
         BlockLabel,
         LocalColorTable,
         ImageData,
-        Block,
-        Subblock,
+        Subblock0,
+        Subblocks,
         Done,
         Error,
     }

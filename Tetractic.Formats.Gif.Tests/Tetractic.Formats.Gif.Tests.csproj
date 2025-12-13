@@ -34,8 +34,8 @@
 
   <Target Name="SetCoverletProperties" AfterTargets="VSTest" BeforeTargets="GenerateCoverageResult">
     <PropertyGroup>
-      <CoverletOutputFormat>opencover</CoverletOutputFormat>
-      <CoverletOutput>$(OutDir)\coverage.xml</CoverletOutput>
+      <CoverletOutputFormat Condition="$(CoverletOutputFormat) == ''">opencover</CoverletOutputFormat>
+      <CoverletOutput Condition="$(CoverletOutput) == ''">$(OutDir)\coverage.xml</CoverletOutput>
     </PropertyGroup>
   </Target>
 

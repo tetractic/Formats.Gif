@@ -44,10 +44,10 @@ internal static class Program
                 {
                     while (true)
                     {
-                        var blockType = reader.PeekBlockType();
-                        switch (blockType)
+                        var part = reader.Peek();
+                        switch (part)
                         {
-                            case GifReader.BlockType.Header:
+                            case GifReader.ReadPart.Header:
                             {
                                 var version = reader.ReadHeader();
                                 if (verbose)
@@ -58,7 +58,7 @@ internal static class Program
                                 writer.WriteHeader(version);
                                 break;
                             }
-                            case GifReader.BlockType.LogicalScreenDescriptor:
+                            case GifReader.ReadPart.LogicalScreenDescriptor:
                             {
                                 var descriptor = reader.ReadLogicalScreenDescriptor();
                                 if (verbose)
@@ -76,7 +76,7 @@ internal static class Program
                                 writer.WriteLogicalScreenDescriptor(descriptor);
                                 break;
                             }
-                            case GifReader.BlockType.GlobalColorTable:
+                            case GifReader.ReadPart.GlobalColorTable:
                             {
                                 var table = reader.ReadColorTable();
                                 if (verbose)
@@ -87,7 +87,7 @@ internal static class Program
                                 writer.WriteColorTable(table);
                                 break;
                             }
-                            case GifReader.BlockType.ImageDescriptor:
+                            case GifReader.ReadPart.ImageDescriptor:
                             {
                                 var descriptor = reader.ReadImageDescriptor();
                                 if (verbose)
@@ -104,7 +104,7 @@ internal static class Program
                                 }
                                 writer.WriteImageDescriptor(descriptor);
 
-                                if (reader.PeekBlockType() == GifReader.BlockType.LocalColorTable)
+                                if (reader.Peek() == GifReader.ReadPart.LocalColorTable)
                                 {
                                     var table = reader.ReadColorTable();
                                     if (verbose)
@@ -124,7 +124,7 @@ internal static class Program
                                 writer.WriteImageData(data);
                                 break;
                             }
-                            case GifReader.BlockType.Extension:
+                            case GifReader.ReadPart.ExtensionLabel:
                             {
                                 var label = reader.ReadExtensionLabel();
                                 switch (label)
@@ -146,7 +146,7 @@ internal static class Program
                                         }
                                         writer.WritePlainTextExtension(extension);
 
-                                        ReadAndWriteBlocks(reader, writer, verbose);
+                                        ReadAndWriteSubblocks(reader, writer, verbose);
                                         break;
                                     }
                                     case GifExtensionLabel.GraphicControl:
@@ -162,6 +162,8 @@ internal static class Program
                                             Console.WriteLine($"  Transparent Color #:   {extension.TransparentColorIndex}");
                                         }
                                         writer.WriteGraphicControlExtension(extension);
+
+                                        ReadAndWriteSubblocks(reader, writer, verbose);
                                         break;
                                     }
                                     case GifExtensionLabel.Comment:
@@ -172,7 +174,7 @@ internal static class Program
                                         }
                                         writer.WriteExtensionLabel(label);
 
-                                        ReadAndWriteBlocks(reader, writer, verbose);
+                                        ReadAndWriteSubblocks(reader, writer, verbose);
                                         break;
                                     }
                                     case GifExtensionLabel.Application:
@@ -231,7 +233,7 @@ internal static class Program
                                         }
                                         else
                                         {
-                                            ReadAndWriteBlocks(reader, writer, verbose);
+                                            ReadAndWriteSubblocks(reader, writer, verbose);
                                         }
                                         break;
                                     }
@@ -243,13 +245,13 @@ internal static class Program
                                         }
                                         writer.WriteExtensionLabel(label);
 
-                                        ReadAndWriteBlocks(reader, writer, verbose);
+                                        ReadAndWriteSubblocks(reader, writer, verbose);
                                         break;
                                     }
                                 }
                                 break;
                             }
-                            case GifReader.BlockType.Trailer:
+                            case GifReader.ReadPart.Trailer:
                             {
                                 if (verbose)
                                 {
@@ -265,9 +267,9 @@ internal static class Program
                                 goto done;
                             }
 
-                            case GifReader.BlockType.LocalColorTable:
-                            case GifReader.BlockType.ImageData:
-                            case GifReader.BlockType.Block:
+                            case GifReader.ReadPart.LocalColorTable:
+                            case GifReader.ReadPart.ImageData:
+                            case GifReader.ReadPart.Subblock:
                             default:
                                 throw new UnreachableException();
                         }
@@ -288,12 +290,12 @@ internal static class Program
                 throw;
             }
 
-            static void ReadAndWriteBlocks(GifReader reader, GifWriter writer, bool verbose)
+            static void ReadAndWriteSubblocks(GifReader reader, GifWriter writer, bool verbose)
             {
                 while (true)
                 {
-                    byte[]? block = reader.ReadBlock();
-                    if (block is null)
+                    byte[]? subblock = reader.ReadSubblock();
+                    if (subblock is null)
                     {
                         if (verbose)
                         {
@@ -305,10 +307,10 @@ internal static class Program
 
                     if (verbose)
                     {
-                        Console.WriteLine($"  Block");
-                        WriteHexLines(Console.Out, "    ", block);
+                        Console.WriteLine($"  Subblock");
+                        WriteHexLines(Console.Out, "    ", subblock);
                     }
-                    writer.WriteBlock(block);
+                    writer.WriteSubblock(subblock);
                 }
             }
         });

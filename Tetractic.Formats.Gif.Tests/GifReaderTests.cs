@@ -57,21 +57,21 @@ public static class GifReaderTests
     }
 
     [Fact]
-    public static void PeekBlockType_Initial_ReturnsHeader()
+    public static void Peek_Initial_ReturnsHeader()
     {
         byte[] bytes = [];
 
         using (var stream = new MemoryStream(bytes))
         using (var reader = new GifReader(stream))
         {
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(GifReader.BlockType.Header, blockType);
+            Assert.Equal(GifReader.ReadPart.Header, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_AfterReadHeader_ReturnsLogicalScreenDescriptor()
+    public static void Peek_AfterReadHeader_ReturnsLogicalScreenDescriptor()
     {
         byte[] bytes =
         [
@@ -83,17 +83,17 @@ public static class GifReaderTests
         {
             _ = reader.ReadHeader();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(GifReader.BlockType.LogicalScreenDescriptor, blockType);
+            Assert.Equal(GifReader.ReadPart.LogicalScreenDescriptor, part);
         }
     }
 
     [Theory]
-    [InlineData(new byte[] { 0x21 }, GifReader.BlockType.Extension)]
-    [InlineData(new byte[] { 0x2C }, GifReader.BlockType.ImageDescriptor)]
-    [InlineData(new byte[] { 0x3B }, GifReader.BlockType.Trailer)]
-    public static void PeekBlockType_AfterReadLogicalScreenDescriptorWithoutGlobalColorTable_ReturnsExpectedResult(byte[] blockBytes, GifReader.BlockType expectedBlockType)
+    [InlineData(new byte[] { 0x21 }, GifReader.ReadPart.ExtensionLabel)]
+    [InlineData(new byte[] { 0x2C }, GifReader.ReadPart.ImageDescriptor)]
+    [InlineData(new byte[] { 0x3B }, GifReader.ReadPart.Trailer)]
+    public static void Peek_AfterReadLogicalScreenDescriptorWithoutGlobalColorTable_ReturnsExpectedResult(byte[] blockBytes, GifReader.ReadPart expectedBlockType)
     {
         byte[] bytes =
         [
@@ -109,14 +109,14 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(expectedBlockType, blockType);
+            Assert.Equal(expectedBlockType, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_AfterReadLogicalScreenDescriptorWithGlobalColorTable_ReturnsGlobalColorTable()
+    public static void Peek_AfterReadLogicalScreenDescriptorWithGlobalColorTable_ReturnsGlobalColorTable()
     {
         byte[] bytes =
         [
@@ -133,17 +133,17 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(GifReader.BlockType.GlobalColorTable, blockType);
+            Assert.Equal(GifReader.ReadPart.GlobalColorTable, part);
         }
     }
 
     [Theory]
-    [InlineData(new byte[] { 0x21 }, GifReader.BlockType.Extension)]
-    [InlineData(new byte[] { 0x2C }, GifReader.BlockType.ImageDescriptor)]
-    [InlineData(new byte[] { 0x3B }, GifReader.BlockType.Trailer)]
-    public static void PeekBlockType_AfterReadGlobalColorTable_ReturnsExpectedResult(byte[] blockBytes, GifReader.BlockType expectedBlockType)
+    [InlineData(new byte[] { 0x21 }, GifReader.ReadPart.ExtensionLabel)]
+    [InlineData(new byte[] { 0x2C }, GifReader.ReadPart.ImageDescriptor)]
+    [InlineData(new byte[] { 0x3B }, GifReader.ReadPart.Trailer)]
+    public static void Peek_AfterReadGlobalColorTable_ReturnsExpectedResult(byte[] blockBytes, GifReader.ReadPart expectedBlockType)
     {
         byte[] bytes =
         [
@@ -161,17 +161,17 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadColorTable();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(expectedBlockType, blockType);
+            Assert.Equal(expectedBlockType, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_AfterReadImageDescriptorWithoutLocalColorTable_ReturnsImageData()
+    public static void Peek_AfterReadImageDescriptorWithoutLocalColorTable_ReturnsImageData()
     {
         byte[] bytes =
         [
@@ -187,17 +187,17 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(GifReader.BlockType.ImageData, blockType);
+            Assert.Equal(GifReader.ReadPart.ImageData, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_AfterReadImageDescriptorWithLocalColorTable_ReturnsLocalColorTable()
+    public static void Peek_AfterReadImageDescriptorWithLocalColorTable_ReturnsLocalColorTable()
     {
         byte[] bytes =
         [
@@ -215,20 +215,20 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(GifReader.BlockType.LocalColorTable, blockType);
+            Assert.Equal(GifReader.ReadPart.LocalColorTable, part);
         }
     }
 
     [Theory]
-    [InlineData(new byte[] { 0x21 }, GifReader.BlockType.Extension)]
-    [InlineData(new byte[] { 0x2C }, GifReader.BlockType.ImageDescriptor)]
-    [InlineData(new byte[] { 0x3B }, GifReader.BlockType.Trailer)]
-    public static void PeekBlockType_AfterReadImageData_ReturnsExpectedResult(byte[] blockBytes, GifReader.BlockType expectedBlockType)
+    [InlineData(new byte[] { 0x21 }, GifReader.ReadPart.ExtensionLabel)]
+    [InlineData(new byte[] { 0x2C }, GifReader.ReadPart.ImageDescriptor)]
+    [InlineData(new byte[] { 0x3B }, GifReader.ReadPart.Trailer)]
+    public static void Peek_AfterReadImageData_ReturnsExpectedResult(byte[] blockBytes, GifReader.ReadPart expectedBlockType)
     {
         byte[] bytes =
         [
@@ -248,18 +248,18 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
             _ = reader.ReadImageData();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(expectedBlockType, blockType);
+            Assert.Equal(expectedBlockType, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_AfterReadBlock_ReturnsBlock()
+    public static void Peek_AfterReadSubblock_ReturnsSubblock()
     {
         byte[] bytes =
         [
@@ -276,21 +276,23 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
-            _ = reader.ReadBlock();
+            byte[]? subblock = reader.ReadSubblock();
 
-            var blockType = reader.PeekBlockType();
+            Debug.Assert(subblock is not null);
 
-            Assert.Equal(GifReader.BlockType.Block, blockType);
+            var part = reader.Peek();
+
+            Assert.Equal(GifReader.ReadPart.Subblock, part);
         }
     }
 
     [Theory]
-    [InlineData(new byte[] { 0x21 }, GifReader.BlockType.Extension)]
-    [InlineData(new byte[] { 0x2C }, GifReader.BlockType.ImageDescriptor)]
-    [InlineData(new byte[] { 0x3B }, GifReader.BlockType.Trailer)]
-    public static void PeekBlockType_AfterReadBlockTerminator_ReturnsExpectedResult(byte[] blockBytes, GifReader.BlockType expectedBlockType)
+    [InlineData(new byte[] { 0x21 }, GifReader.ReadPart.ExtensionLabel)]
+    [InlineData(new byte[] { 0x2C }, GifReader.ReadPart.ImageDescriptor)]
+    [InlineData(new byte[] { 0x3B }, GifReader.ReadPart.Trailer)]
+    public static void Peek_AfterReadSubblockReturnsNull_ReturnsExpectedResult(byte[] blockBytes, GifReader.ReadPart expectedBlockType)
     {
         byte[] bytes =
         [
@@ -308,28 +310,26 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
-            _ = reader.ReadBlock();
+            byte[]? subblock = reader.ReadSubblock();
 
-            var blockType = reader.PeekBlockType();
+            Debug.Assert(subblock is null);
 
-            Assert.Equal(expectedBlockType, blockType);
+            var part = reader.Peek();
+
+            Assert.Equal(expectedBlockType, part);
         }
     }
 
-    [Theory]
-    [InlineData(new byte[] { 0x21 }, GifReader.BlockType.Extension)]
-    [InlineData(new byte[] { 0x2C }, GifReader.BlockType.ImageDescriptor)]
-    [InlineData(new byte[] { 0x3B }, GifReader.BlockType.Trailer)]
-    public static void PeekBlockType_AfterReadGraphicControlExtension_ReturnsExpectedResult(byte[] blockBytes, GifReader.BlockType expectedBlockType)
+    [Fact]
+    public static void Peek_AfterReadGraphicControlExtension_ReturnsSubblock()
     {
         byte[] bytes =
         [
             .. "GIF89a"u8,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x21, 0xF9, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-            .. blockBytes
+            0x21, 0xF9, 0x04, 0x00, 0x00, 0x00, 0x00,
         ];
 
         using (var stream = new MemoryStream(bytes))
@@ -339,18 +339,18 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
             _ = reader.ReadGraphicControlExtension();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(expectedBlockType, blockType);
+            Assert.Equal(GifReader.ReadPart.Subblock, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_AfterReadPlainTextExtension_ReturnsBlock()
+    public static void Peek_AfterReadPlainTextExtension_ReturnsSubblock()
     {
         byte[] bytes =
         [
@@ -368,18 +368,18 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
             _ = reader.ReadPlainTextExtension();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(GifReader.BlockType.Block, blockType);
+            Assert.Equal(GifReader.ReadPart.Subblock, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_AfterReadApplicationExtension_ReturnsBlock()
+    public static void Peek_AfterReadApplicationExtension_ReturnsSubblock()
     {
         byte[] bytes =
         [
@@ -397,20 +397,20 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
             Span<byte> applicationIdentifier = stackalloc byte[8];
             Span<byte> applicationAuthenticationCode = stackalloc byte[3];
             reader.ReadApplicationExtension(applicationIdentifier, applicationAuthenticationCode);
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(GifReader.BlockType.Block, blockType);
+            Assert.Equal(GifReader.ReadPart.Subblock, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_AfterReadNetscapeApplicationExtensionSubblock_ReturnsBlock()
+    public static void Peek_AfterReadNetscapeApplicationExtensionSubblock_ReturnsSubblock()
     {
         byte[] bytes =
         [
@@ -429,24 +429,26 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
             Span<byte> applicationIdentifier = stackalloc byte[8];
             Span<byte> applicationAuthenticationCode = stackalloc byte[3];
             reader.ReadApplicationExtension(applicationIdentifier, applicationAuthenticationCode);
-            _ = reader.ReadNetscapeApplicationExtensionSubblock();
+            var subblock = reader.ReadNetscapeApplicationExtensionSubblock();
 
-            var blockType = reader.PeekBlockType();
+            Debug.Assert(subblock is not null);
 
-            Assert.Equal(GifReader.BlockType.Block, blockType);
+            var part = reader.Peek();
+
+            Assert.Equal(GifReader.ReadPart.Subblock, part);
         }
     }
 
     [Theory]
-    [InlineData(new byte[] { 0x21 }, GifReader.BlockType.Extension)]
-    [InlineData(new byte[] { 0x2C }, GifReader.BlockType.ImageDescriptor)]
-    [InlineData(new byte[] { 0x3B }, GifReader.BlockType.Trailer)]
-    public static void PeekBlockType_AfterReadNetscapeApplicationExtensionSubblockTerminator_ReturnsExpectedResult(byte[] blockBytes, GifReader.BlockType expectedBlockType)
+    [InlineData(new byte[] { 0x21 }, GifReader.ReadPart.ExtensionLabel)]
+    [InlineData(new byte[] { 0x2C }, GifReader.ReadPart.ImageDescriptor)]
+    [InlineData(new byte[] { 0x3B }, GifReader.ReadPart.Trailer)]
+    public static void Peek_AfterReadNetscapeApplicationExtensionSubblockReturnsNull_ReturnsExpectedResult(byte[] blockBytes, GifReader.ReadPart expectedBlockType)
     {
         byte[] bytes =
         [
@@ -465,21 +467,23 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
             Span<byte> applicationIdentifier = stackalloc byte[8];
             Span<byte> applicationAuthenticationCode = stackalloc byte[3];
             reader.ReadApplicationExtension(applicationIdentifier, applicationAuthenticationCode);
-            _ = reader.ReadNetscapeApplicationExtensionSubblock();
+            var subblock = reader.ReadNetscapeApplicationExtensionSubblock();
 
-            var blockType = reader.PeekBlockType();
+            Debug.Assert(subblock is null);
 
-            Assert.Equal(expectedBlockType, blockType);
+            var part = reader.Peek();
+
+            Assert.Equal(expectedBlockType, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_AfterReadExtensionLabel_ReturnsBlock()
+    public static void Peek_AfterReadExtensionLabel_ReturnsSubblock()
     {
         byte[] bytes =
         [
@@ -495,20 +499,20 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(GifReader.BlockType.Block, blockType);
+            Assert.Equal(GifReader.ReadPart.Subblock, part);
         }
     }
 
     [Theory]
-    [InlineData(new byte[] { 0x21 }, GifReader.BlockType.Extension)]
-    [InlineData(new byte[] { 0x2C }, GifReader.BlockType.ImageDescriptor)]
-    [InlineData(new byte[] { 0x3B }, GifReader.BlockType.Trailer)]
-    public static void PeekBlockType_Again_ReturnsSameResult(byte[] blockBytes, GifReader.BlockType expectedBlockType)
+    [InlineData(new byte[] { 0x21 }, GifReader.ReadPart.ExtensionLabel)]
+    [InlineData(new byte[] { 0x2C }, GifReader.ReadPart.ImageDescriptor)]
+    [InlineData(new byte[] { 0x3B }, GifReader.ReadPart.Trailer)]
+    public static void Peek_Again_ReturnsSameResult(byte[] blockBytes, GifReader.ReadPart expectedBlockType)
     {
         byte[] bytes =
         [
@@ -524,16 +528,16 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
 
-            var blockType = reader.PeekBlockType();
+            var part = reader.Peek();
 
-            Assert.Equal(expectedBlockType, blockType);
+            Assert.Equal(expectedBlockType, part);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_InvalidBlockType_ThrowsInvalidDataException()
+    public static void Peek_InvalidBlockType_ThrowsInvalidDataException()
     {
         byte[] bytes =
         [
@@ -549,14 +553,14 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var ex = Assert.Throws<InvalidDataException>(() => reader.PeekBlockType());
+            var ex = Assert.Throws<InvalidDataException>(() => reader.Peek());
 
             Assert.Equal("An unrecognized block label was read.", ex.Message);
         }
     }
 
     [Fact]
-    public static void PeekBlockType_EndOfFile_ThrowsEndOfStreamException()
+    public static void Peek_EndOfFile_ThrowsEndOfStreamException()
     {
         byte[] bytes =
         [
@@ -571,7 +575,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var ex = Assert.Throws<EndOfStreamException>(() => reader.PeekBlockType());
+            var ex = Assert.Throws<EndOfStreamException>(() => reader.Peek());
 
             AssertIsErrorState(reader);
         }
@@ -891,7 +895,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             var colors = reader.ReadColorTable();
@@ -934,7 +938,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
 
             var ex = Assert.Throws<EndOfStreamException>(() => reader.ReadImageDescriptor());
 
@@ -1002,7 +1006,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
 
             var ex = Assert.Throws<InvalidDataException>(() => reader.ReadImageDescriptor());
 
@@ -1072,7 +1076,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
 
             var descriptor = reader.ReadImageDescriptor();
 
@@ -1121,7 +1125,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             var ex = Assert.Throws<EndOfStreamException>(reader.ReadImageData);
@@ -1151,7 +1155,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             var ex = Assert.Throws<InvalidDataException>(reader.ReadImageData);
@@ -1179,7 +1183,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             var ex = Assert.Throws<InvalidDataException>(reader.ReadImageData);
@@ -1208,7 +1212,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             var ex = Assert.Throws<InvalidDataException>(reader.ReadImageData);
@@ -1237,7 +1241,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             var ex = Assert.Throws<InvalidDataException>(reader.ReadImageData);
@@ -1266,7 +1270,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             var ex = Assert.Throws<InvalidDataException>(reader.ReadImageData);
@@ -1294,7 +1298,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             var ex = Assert.Throws<InvalidDataException>(reader.ReadImageData);
@@ -1322,7 +1326,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             var ex = Assert.Throws<InvalidDataException>(reader.ReadImageData);
@@ -1400,7 +1404,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             byte[] imageData = reader.ReadImageData();
@@ -1440,7 +1444,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
 
             var ex = Assert.Throws<EndOfStreamException>(() => reader.ReadExtensionLabel());
 
@@ -1480,7 +1484,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
 
             var ex = Assert.Throws<InvalidDataException>(() => reader.ReadExtensionLabel());
 
@@ -1508,7 +1512,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
 
             var ex = Assert.Throws<InvalidDataException>(() => reader.ReadExtensionLabel());
 
@@ -1536,7 +1540,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
 
             var label = reader.ReadExtensionLabel();
 
@@ -1563,7 +1567,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
 
             var label = reader.ReadExtensionLabel();
 
@@ -1572,7 +1576,7 @@ public static class GifReaderTests
     }
 
     [Fact]
-    public static void ReadBlock_InvalidState_ThrowsInvalidOperationException()
+    public static void ReadSubblock_InvalidState_ThrowsInvalidOperationException()
     {
         byte[] bytes =
         [
@@ -1582,14 +1586,14 @@ public static class GifReaderTests
         using (var stream = new MemoryStream(bytes))
         using (var reader = new GifReader(stream))
         {
-            var ex = Assert.Throws<InvalidOperationException>(reader.ReadBlock);
+            var ex = Assert.Throws<InvalidOperationException>(reader.ReadSubblock);
 
             Assert.Equal(new InvalidOperationException().Message, ex.Message);
         }
     }
 
     [Fact]
-    public static void ReadBlock_EndOfFile_ThrowsEndOfStreamException()
+    public static void ReadSubblock_EndOfFile_ThrowsEndOfStreamException()
     {
         byte[] bytes =
         [
@@ -1606,12 +1610,12 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Comment);
 
-            var ex = Assert.Throws<EndOfStreamException>(reader.ReadBlock);
+            var ex = Assert.Throws<EndOfStreamException>(reader.ReadSubblock);
 
             AssertIsErrorState(reader);
         }
@@ -1619,7 +1623,7 @@ public static class GifReaderTests
 
     private static readonly IEnumerable<byte> _255bytes = Enumerable.Range(0, 255).Select(x => (byte)x);
 
-    public static readonly TheoryData<byte[], byte[]> ReadBlock_Data = new()
+    public static readonly TheoryData<byte[], byte[]> ReadSubblock_Data = new()
     {
         { new byte[] { 0x01, 0x00 }, new byte[] { 0x00 } },
         { new byte[] { 0x02, 0x01, 0x02 }, new byte[] { 0x01, 0x02 } },
@@ -1627,8 +1631,8 @@ public static class GifReaderTests
     };
 
     [Theory]
-    [MemberData(nameof(ReadBlock_Data))]
-    public static void ReadBlock_PlainTextExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_PlainTextExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
     {
         byte[] bytes =
         [
@@ -1645,20 +1649,20 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.PlainText);
 
-            byte[]? result = reader.ReadBlock();
+            byte[]? result = reader.ReadSubblock();
 
             Assert.Equal(expectedResult, result);
         }
     }
 
     [Theory]
-    [MemberData(nameof(ReadBlock_Data))]
-    public static void ReadBlock_AfterReadPlainTextExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_AfterReadPlainTextExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
     {
         byte[] bytes =
         [
@@ -1676,22 +1680,22 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.PlainText);
 
             _ = reader.ReadPlainTextExtension();
 
-            byte[]? result = reader.ReadBlock();
+            byte[]? result = reader.ReadSubblock();
 
             Assert.Equal(expectedResult, result);
         }
     }
 
     [Theory]
-    [MemberData(nameof(ReadBlock_Data))]
-    public static void ReadBlock_GraphicControlExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_GraphicControlExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
     {
         byte[] bytes =
         [
@@ -1708,20 +1712,53 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.GraphicControl);
 
-            byte[]? result = reader.ReadBlock();
+            byte[]? result = reader.ReadSubblock();
 
             Assert.Equal(expectedResult, result);
         }
     }
 
     [Theory]
-    [MemberData(nameof(ReadBlock_Data))]
-    public static void ReadBlock_CommentExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_AfterReadGraphicControlExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    {
+        byte[] bytes =
+        [
+            .. "GIF89a"u8,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x21, 0xF9,
+            0x04, 0x00, 0x00, 0x00, 0x00,
+            .. blockBytes
+        ];
+
+        using (var stream = new MemoryStream(bytes))
+        using (var reader = new GifReader(stream))
+        {
+            _ = reader.ReadHeader();
+
+            _ = reader.ReadLogicalScreenDescriptor();
+
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
+            var extensionLabel = reader.ReadExtensionLabel();
+            Debug.Assert(extensionLabel == GifExtensionLabel.GraphicControl);
+
+            _ = reader.ReadGraphicControlExtension();
+
+            byte[]? result = reader.ReadSubblock();
+
+            Assert.Equal(expectedResult, result);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_CommentExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
     {
         byte[] bytes =
         [
@@ -1738,20 +1775,20 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Comment);
 
-            byte[]? result = reader.ReadBlock();
+            byte[]? result = reader.ReadSubblock();
 
             Assert.Equal(expectedResult, result);
         }
     }
 
     [Theory]
-    [MemberData(nameof(ReadBlock_Data))]
-    public static void ReadBlock_AfterCommentExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_AfterCommentExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
     {
         byte[] bytes =
         [
@@ -1769,22 +1806,22 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Comment);
 
-            _ = reader.ReadBlock();
+            _ = reader.ReadSubblock();
 
-            byte[]? result = reader.ReadBlock();
+            byte[]? result = reader.ReadSubblock();
 
             Assert.Equal(expectedResult, result);
         }
     }
 
     [Theory]
-    [MemberData(nameof(ReadBlock_Data))]
-    public static void ReadBlock_ReadApplicationExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_ReadApplicationExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
     {
         byte[] bytes =
         [
@@ -1801,20 +1838,20 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
-            byte[]? result = reader.ReadBlock();
+            byte[]? result = reader.ReadSubblock();
 
             Assert.Equal(expectedResult, result);
         }
     }
 
     [Theory]
-    [MemberData(nameof(ReadBlock_Data))]
-    public static void ReadBlock_AfterReadApplicationExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_AfterReadApplicationExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
     {
         byte[] bytes =
         [
@@ -1832,8 +1869,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -1841,15 +1878,15 @@ public static class GifReaderTests
             Span<byte> applicationAuthenticationCode = stackalloc byte[3];
             reader.ReadApplicationExtension(applicationIdentifier, applicationAuthenticationCode);
 
-            byte[]? result = reader.ReadBlock();
+            byte[]? result = reader.ReadSubblock();
 
             Assert.Equal(expectedResult, result);
         }
     }
 
     [Theory]
-    [MemberData(nameof(ReadBlock_Data))]
-    public static void ReadBlock_UnknownExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_UnknownExtension_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
     {
         byte[] bytes =
         [
@@ -1866,19 +1903,19 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == 0x00);
 
-            byte[]? result = reader.ReadBlock();
+            byte[]? result = reader.ReadSubblock();
 
             Assert.Equal(expectedResult, result);
         }
     }
 
     [Fact]
-    public static void ReadBlock_BlockTerminator_ReturnsExpectedResult()
+    public static void ReadSubblock_BlockTerminator_ReturnsExpectedResult()
     {
         byte[] bytes =
         [
@@ -1895,12 +1932,12 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Comment);
 
-            byte[]? result = reader.ReadBlock();
+            byte[]? result = reader.ReadSubblock();
 
             Assert.Null(result);
         }
@@ -1940,8 +1977,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Trailer);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.Trailer);
 
             var ex = Assert.Throws<InvalidOperationException>(() => reader.ReadGraphicControlExtension());
 
@@ -1966,8 +2003,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.PlainText);
 
@@ -1985,7 +2022,7 @@ public static class GifReaderTests
             .. "GIF89a"u8,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x21, 0xF9,
-            0x04, 0x00, 0x00, 0x00, 0x00
+            0x04, 0x00, 0x00, 0x00
         ];
 
         using (var stream = new MemoryStream(bytes))
@@ -1995,8 +2032,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.GraphicControl);
 
@@ -2014,8 +2051,7 @@ public static class GifReaderTests
             .. "GIF89a"u8,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x21, 0xF9,
-            0x03, 0x00, 0x00, 0x00, 0x00,
-            0x00
+            0x03, 0x00, 0x00, 0x00, 0x00
         ];
 
         using (var stream = new MemoryStream(bytes))
@@ -2025,8 +2061,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.GraphicControl);
 
@@ -2036,55 +2072,25 @@ public static class GifReaderTests
         }
     }
 
-    [Fact]
-    public static void ReadGraphicControlExtension_UnexpectedSubblock_ThrowsInvalidDataException()
-    {
-        byte[] bytes =
-        [
-            .. "GIF89a"u8,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x21, 0xF9,
-            0x04, 0x00, 0x00, 0x00, 0x00,
-            0x01
-        ];
-
-        using (var stream = new MemoryStream(bytes))
-        using (var reader = new GifReader(stream))
-        {
-            _ = reader.ReadHeader();
-
-            _ = reader.ReadLogicalScreenDescriptor();
-
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
-            var extensionLabel = reader.ReadExtensionLabel();
-            Debug.Assert(extensionLabel == GifExtensionLabel.GraphicControl);
-
-            var ex = Assert.Throws<InvalidDataException>(() => reader.ReadGraphicControlExtension());
-
-            Assert.Equal("Unexpected sub-block.", ex.Message);
-        }
-    }
-
     public static readonly TheoryData<byte[], GraphicControlExtensionFields, string> ReadGraphicControlExtension_ValidInVersion89a_Data = new()
     {
-        { new byte[] { 0x21, 0xF9, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0, 0, 0), null! },
-        { new byte[] { 0x21, 0xF9, 0x04, 0x04, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.DoNotDispose, false, false, 0, 0, 0), null! },
-        { new byte[] { 0x21, 0xF9, 0x04, 0x08, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.RestoreToBackground, false, false, 0, 0, 0), null! },
-        { new byte[] { 0x21, 0xF9, 0x04, 0x0C, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.RestoreToPrevious, false, false, 0, 0, 0), null! },
-        { new byte[] { 0x21, 0xF9, 0x04, 0x02, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, true, false, 0, 0, 0), null! },
-        { new byte[] { 0x21, 0xF9, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, true, 0, 0, 0), null! },
-        { new byte[] { 0x21, 0xF9, 0x04, 0x00, 0x01, 0x02, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0x0201, 0, 0), null! },
-        { new byte[] { 0x21, 0xF9, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0, 0x01, 0), null! },
+        { new byte[] { 0x21, 0xF9, 0x04, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0, 0, 0), null! },
+        { new byte[] { 0x21, 0xF9, 0x04, 0x04, 0x00, 0x00, 0x00 }, (GifDisposalMethod.DoNotDispose, false, false, 0, 0, 0), null! },
+        { new byte[] { 0x21, 0xF9, 0x04, 0x08, 0x00, 0x00, 0x00 }, (GifDisposalMethod.RestoreToBackground, false, false, 0, 0, 0), null! },
+        { new byte[] { 0x21, 0xF9, 0x04, 0x0C, 0x00, 0x00, 0x00 }, (GifDisposalMethod.RestoreToPrevious, false, false, 0, 0, 0), null! },
+        { new byte[] { 0x21, 0xF9, 0x04, 0x02, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, true, false, 0, 0, 0), null! },
+        { new byte[] { 0x21, 0xF9, 0x04, 0x01, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, true, 0, 0, 0), null! },
+        { new byte[] { 0x21, 0xF9, 0x04, 0x00, 0x01, 0x02, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0x0201, 0, 0), null! },
+        { new byte[] { 0x21, 0xF9, 0x04, 0x00, 0x00, 0x00, 0x01 }, (GifDisposalMethod.Unspecified, false, false, 0, 0x01, 0), null! },
     };
 
     public static readonly TheoryData<byte[], GraphicControlExtensionFields, string> ReadGraphicControlExtension_ValidInUnknownVersion_Data = new()
     {
-        { new byte[] { 0x21, 0xF9, 0x04, 0b100_000_0_0, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0, 0, 0b100), "Reserved bits are set." },
-        { new byte[] { 0x21, 0xF9, 0x04, 0b010_000_0_0, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0, 0, 0b010), "Reserved bits are set." },
-        { new byte[] { 0x21, 0xF9, 0x04, 0b001_000_0_0, 0x00, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0, 0, 0b001), "Reserved bits are set." },
-        { new byte[] { 0x21, 0xF9, 0x04, 0b000_100_0_0, 0x00, 0x00, 0x00, 0x00 }, ((GifDisposalMethod)0b100, false, false, 0, 0, 0), "Disposal method is undefined in format version." },
-        { new byte[] { 0x21, 0xF9, 0x04, 0b000_111_0_0, 0x00, 0x00, 0x00, 0x00 }, ((GifDisposalMethod)0b111, false, false, 0, 0, 0), "Disposal method is undefined in format version." },
+        { new byte[] { 0x21, 0xF9, 0x04, 0b100_000_0_0, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0, 0, 0b100), "Reserved bits are set." },
+        { new byte[] { 0x21, 0xF9, 0x04, 0b010_000_0_0, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0, 0, 0b010), "Reserved bits are set." },
+        { new byte[] { 0x21, 0xF9, 0x04, 0b001_000_0_0, 0x00, 0x00, 0x00 }, (GifDisposalMethod.Unspecified, false, false, 0, 0, 0b001), "Reserved bits are set." },
+        { new byte[] { 0x21, 0xF9, 0x04, 0b000_100_0_0, 0x00, 0x00, 0x00 }, ((GifDisposalMethod)0b100, false, false, 0, 0, 0), "Disposal method is undefined in format version." },
+        { new byte[] { 0x21, 0xF9, 0x04, 0b000_111_0_0, 0x00, 0x00, 0x00 }, ((GifDisposalMethod)0b111, false, false, 0, 0, 0), "Disposal method is undefined in format version." },
     };
 
     [Theory]
@@ -2105,7 +2111,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
 
             var ex = Assert.Throws<InvalidDataException>(() => reader.ReadGraphicControlExtension());
@@ -2158,7 +2164,7 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
             var extension = reader.ReadGraphicControlExtension();
 
@@ -2204,8 +2210,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Trailer);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.Trailer);
 
             var ex = Assert.Throws<InvalidOperationException>(() => reader.ReadPlainTextExtension());
 
@@ -2230,8 +2236,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2259,8 +2265,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.PlainText);
 
@@ -2288,8 +2294,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.PlainText);
 
@@ -2323,8 +2329,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.PlainText);
 
@@ -2424,8 +2430,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Trailer);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.Trailer);
 
             var ex = Assert.Throws<InvalidOperationException>(() =>
             {
@@ -2455,8 +2461,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.PlainText);
 
@@ -2489,8 +2495,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2523,8 +2529,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2558,8 +2564,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2608,11 +2614,11 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Comment);
-            _ = reader.ReadBlock();
+            _ = reader.ReadSubblock();
 
             var ex = Assert.Throws<InvalidOperationException>(reader.ReadNetscapeApplicationExtensionSubblock);
 
@@ -2641,8 +2647,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2677,8 +2683,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2713,8 +2719,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2747,8 +2753,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2783,8 +2789,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2820,8 +2826,8 @@ public static class GifReaderTests
 
             _ = reader.ReadLogicalScreenDescriptor();
 
-            var blockType = reader.PeekBlockType();
-            Debug.Assert(blockType == GifReader.BlockType.Extension);
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ExtensionLabel);
             var extensionLabel = reader.ReadExtensionLabel();
             Debug.Assert(extensionLabel == GifExtensionLabel.Application);
 
@@ -2838,7 +2844,7 @@ public static class GifReaderTests
 
     private static void AssertIsErrorState(GifReader reader)
     {
-        var ex = Assert.Throws<InvalidOperationException>(() => reader.PeekBlockType());
+        var ex = Assert.Throws<InvalidOperationException>(() => reader.Peek());
 
         Assert.Equal(new InvalidOperationException().Message, ex.Message);
     }

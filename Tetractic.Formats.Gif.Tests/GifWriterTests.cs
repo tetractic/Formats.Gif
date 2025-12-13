@@ -201,6 +201,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version87a);
+
             writer.WriteLogicalScreenDescriptor(new GifLogicalScreenDescriptor
             {
                 HasGlobalColorTable = true,
@@ -228,6 +229,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version87a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             writer.WriteImageDescriptor(new GifImageDescriptor
@@ -253,6 +255,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version87a);
+
             writer.WriteLogicalScreenDescriptor(new GifLogicalScreenDescriptor
             {
                 HasGlobalColorTable = true,
@@ -285,6 +288,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version87a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             writer.WriteImageDescriptor(new GifImageDescriptor
@@ -359,6 +363,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(version);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             var ex = Assert.Throws<InvalidOperationException>(() => writer.WriteImageDescriptor(CreateImageDescriptor(fields)));
@@ -405,6 +410,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(version);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             stream.SetLength(0);
@@ -437,6 +443,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version87a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             writer.WriteImageDescriptor(new GifImageDescriptor
@@ -494,6 +501,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream, leaveOpen: true))
         {
             writer.WriteHeader(GifVersion.Version87a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             writer.WriteImageDescriptor(new GifImageDescriptor
@@ -510,9 +518,10 @@ public class GifWriterTests
         using (var reader = new GifReader(stream))
         {
             _ = reader.ReadHeader();
+
             _ = reader.ReadLogicalScreenDescriptor();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
 
             byte[] readImageData = reader.ReadImageData();
@@ -567,6 +576,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(version);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             var ex = Assert.Throws<InvalidOperationException>(() => writer.WriteExtensionLabel(label));
@@ -598,6 +608,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(version);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             stream.SetLength(0);
@@ -611,24 +622,24 @@ public class GifWriterTests
     [Theory]
     [InlineData(0)]
     [InlineData(256)]
-    public static void WriteBlock_InvalidLength_ThrowsArgumentException(int blockLength)
+    public static void WriteSubblock_InvalidLength_ThrowsArgumentException(int blockLength)
     {
         using (var stream = new MemoryStream())
         using (var writer = new GifWriter(stream))
         {
-            var ex = Assert.Throws<ArgumentException>(() => writer.WriteBlock(new byte[blockLength]));
+            var ex = Assert.Throws<ArgumentException>(() => writer.WriteSubblock(new byte[blockLength]));
 
             Assert.Equal("data", ex.ParamName);
         }
     }
 
     [Fact]
-    public static void WriteBlock_InvalidState_ThrowsInvalidOperationException()
+    public static void WriteSubblock_InvalidState_ThrowsInvalidOperationException()
     {
         using (var stream = new MemoryStream())
         using (var writer = new GifWriter(stream))
         {
-            var ex = Assert.Throws<InvalidOperationException>(() => writer.WriteBlock(new byte[1]));
+            var ex = Assert.Throws<InvalidOperationException>(() => writer.WriteSubblock(new byte[1]));
 
             Assert.Equal(new InvalidOperationException().Message, ex.Message);
         }
@@ -636,7 +647,7 @@ public class GifWriterTests
 
     private static readonly IEnumerable<byte> _255bytes = Enumerable.Range(0, 255).Select(x => (byte)x);
 
-    public static readonly TheoryData<byte[], byte[]> WriteBlock_Data = new()
+    public static readonly TheoryData<byte[], byte[]> WriteSubblock_Data = new()
     {
         { new byte[] { 0x00 }, new byte[] { 0x01, 0x00 } },
         { new byte[] { 0x01, 0x02 }, new byte[] { 0x02, 0x01, 0x02 } },
@@ -644,75 +655,100 @@ public class GifWriterTests
     };
 
     [Theory]
-    [MemberData(nameof(WriteBlock_Data))]
-    public static void WriteBlock_AfterWriteExtensionLabel_WriteExpectedBytes(byte[] data, byte[] expectedBytes)
+    [MemberData(nameof(WriteSubblock_Data))]
+    public static void WriteSubblock_AfterWriteExtensionLabel_WritesExpectedBytes(byte[] data, byte[] expectedBytes)
     {
         using (var stream = new MemoryStream())
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             writer.WriteExtensionLabel(GifExtensionLabel.Comment);
 
             stream.SetLength(0);
 
-            writer.WriteBlock(data);
+            writer.WriteSubblock(data);
 
             Assert.Equal(expectedBytes, stream.ToArray());
         }
     }
 
     [Theory]
-    [MemberData(nameof(WriteBlock_Data))]
-    public static void WriteBlock_AfterWriteBlock_WriteExpectedBytes(byte[] data, byte[] expectedBytes)
+    [MemberData(nameof(WriteSubblock_Data))]
+    public static void WriteSubblock_AfterWriteSubblock_WritesExpectedBytes(byte[] data, byte[] expectedBytes)
     {
         using (var stream = new MemoryStream())
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             writer.WriteExtensionLabel(GifExtensionLabel.Comment);
 
-            writer.WriteBlock([0x00]);
+            writer.WriteSubblock([0x00]);
 
             stream.SetLength(0);
 
-            writer.WriteBlock(data);
+            writer.WriteSubblock(data);
 
             Assert.Equal(expectedBytes, stream.ToArray());
         }
     }
 
     [Theory]
-    [MemberData(nameof(WriteBlock_Data))]
-    public static void WriteBlock_AfterWritePlainTextExtension_WriteExpectedBytes(byte[] data, byte[] expectedBytes)
+    [MemberData(nameof(WriteSubblock_Data))]
+    public static void WriteSubblock_AfterWritePlainTextExtension_WritesExpectedBytes(byte[] data, byte[] expectedBytes)
     {
         using (var stream = new MemoryStream())
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             writer.WritePlainTextExtension(default);
 
             stream.SetLength(0);
 
-            writer.WriteBlock(data);
+            writer.WriteSubblock(data);
 
             Assert.Equal(expectedBytes, stream.ToArray());
         }
     }
 
     [Theory]
-    [MemberData(nameof(WriteBlock_Data))]
-    public static void WriteBlock_AfterWriteApplicationExtension_WriteExpectedBytes(byte[] data, byte[] expectedBytes)
+    [MemberData(nameof(WriteSubblock_Data))]
+    public static void WriteSubblock_AfterWriteGraphicControlExtension_WritesExpectedBytes(byte[] data, byte[] expectedBytes)
     {
         using (var stream = new MemoryStream())
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
+            writer.WriteLogicalScreenDescriptor(default);
+
+            writer.WriteGraphicControlExtension(default);
+
+            stream.SetLength(0);
+
+            writer.WriteSubblock(data);
+
+            Assert.Equal(expectedBytes, stream.ToArray());
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(WriteSubblock_Data))]
+    public static void WriteSubblock_AfterWriteApplicationExtension_WritesExpectedBytes(byte[] data, byte[] expectedBytes)
+    {
+        using (var stream = new MemoryStream())
+        using (var writer = new GifWriter(stream))
+        {
+            writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             Span<byte> applicationIdentifier = stackalloc byte[8];
@@ -721,7 +757,7 @@ public class GifWriterTests
 
             stream.SetLength(0);
 
-            writer.WriteBlock(data);
+            writer.WriteSubblock(data);
 
             Assert.Equal(expectedBytes, stream.ToArray());
         }
@@ -740,12 +776,13 @@ public class GifWriterTests
     }
 
     [Fact]
-    public static void WriteBlockTerminator_Valid_WriteExpectedBytes()
+    public static void WriteBlockTerminator_Valid_WritesExpectedBytes()
     {
         using (var stream = new MemoryStream())
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             writer.WriteExtensionLabel(GifExtensionLabel.Comment);
@@ -805,6 +842,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(version);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             var ex = Assert.Throws<InvalidOperationException>(() => writer.WriteGraphicControlExtension(CreateGraphicControlExtension(fields)));
@@ -840,6 +878,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(version);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             stream.SetLength(0);
@@ -869,6 +908,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version87a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             var ex = Assert.Throws<InvalidOperationException>(() => writer.WritePlainTextExtension(default));
@@ -891,6 +931,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             stream.SetLength(0);
@@ -959,6 +1000,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version87a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             var ex = Assert.Throws<InvalidOperationException>(() =>
@@ -981,6 +1023,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             stream.SetLength(0);
@@ -1022,6 +1065,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             writer.WritePlainTextExtension(default);
@@ -1041,6 +1085,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             Span<byte> applicationIdentifier = stackalloc byte[8];
@@ -1067,6 +1112,7 @@ public class GifWriterTests
         using (var writer = new GifWriter(stream))
         {
             writer.WriteHeader(GifVersion.Version89a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             Span<byte> applicationIdentifier = stackalloc byte[8];
@@ -1102,7 +1148,8 @@ public class GifWriterTests
         using (var stream = new MemoryStream())
         using (var writer = new GifWriter(stream))
         {
-            writer.WriteHeader(GifVersion.Version89a);
+            writer.WriteHeader(GifVersion.Version87a);
+
             writer.WriteLogicalScreenDescriptor(default);
 
             stream.SetLength(0);

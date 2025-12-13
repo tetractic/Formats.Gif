@@ -37,10 +37,11 @@ public static class Tests
             writer.WriteImageData([]);
 
             writer.WriteExtensionLabel(GifExtensionLabel.Comment);
-            writer.WriteBlock([0x00]);
+            writer.WriteSubblock([0x00]);
             writer.WriteBlockTerminator();
 
             writer.WriteGraphicControlExtension(default);
+            writer.WriteBlockTerminator();
 
             writer.WritePlainTextExtension(default);
             writer.WriteBlockTerminator();
@@ -62,26 +63,27 @@ public static class Tests
             _ = reader.ReadLogicalScreenDescriptor();
             _ = reader.ReadColorTable();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadImageDescriptor();
             _ = reader.ReadColorTable();
             _ = reader.ReadImageData();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
-            _ = reader.ReadBlock();
-            _ = reader.ReadBlock();
+            _ = reader.ReadSubblock();
+            _ = reader.ReadSubblock();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
             _ = reader.ReadGraphicControlExtension();
+            _ = reader.ReadSubblock();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
             _ = reader.ReadPlainTextExtension();
-            _ = reader.ReadBlock();
+            _ = reader.ReadSubblock();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
             _ = reader.ReadExtensionLabel();
             Span<byte> applicationIdentifier = stackalloc byte[8];
             Span<byte> applicationAuthenticationCode = stackalloc byte[3];
@@ -89,7 +91,7 @@ public static class Tests
             _ = reader.ReadNetscapeApplicationExtensionSubblock();
             _ = reader.ReadNetscapeApplicationExtensionSubblock();
 
-            _ = reader.PeekBlockType();
+            _ = reader.Peek();
         }
     }
 }

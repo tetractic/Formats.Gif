@@ -10,8 +10,8 @@
 namespace Tetractic.Formats.Gif;
 
 /// <summary>
-/// A Plain Text Extension, which describes how plain text is to be rendered.  The text is in the
-/// sub-blocks of the extension.
+/// The first sub-block of a Plain Text Extension, which describes how plain text is to be
+/// rendered.  The text is in the remaining sub-blocks of the extension block.
 /// </summary>
 public readonly struct GifPlainTextExtension
 {

@@ -33,7 +33,7 @@ namespace Tetractic.Formats.Gif;
 /// │ Global Color Table (opt.) │            ReadColorTable()
 /// └─┬─────────────────────────┘
 ///   ▼
-///   ├◄──────────────────────────────────┐  PeekBlockType()
+///   ├◄──────────────────────────────────┐  Peek()
 ///   │                                   │
 ///   │ 00-7F: Graphic Rendering blocks   │
 ///   │                                   │
@@ -54,27 +54,27 @@ namespace Tetractic.Formats.Gif;
 ///   │  └─┬──────────────────────┘       │  ReadPlainTextExtension()
 ///   │    ▼  ┌◄──┐                       │
 ///   │  ┌─┴──┴─┐ │                       │
-///   │  │ Data ├─┴──────────────────────►┤  ReadBlock()
+///   │  │ Data ├─┴──────────────────────►┤  ReadSubblock()
 ///   │  └──────┘                         ▲
 ///   │                                   │
 ///   │ 80-F9: Control blocks             │
 ///   │                                   │
-///   │  ┌─────────────────────────────┐  │
-///   ├─►┤ 21 F9: Graphic Control Ext. ├─►┤  ReadExtensionLabel() and
-///   │  └─────────────────────────────┘  ▲  ReadGraphicControlExtension()
+///   │  ┌─────────────────────────────┐  │  ReadExtensionLabel(),
+///   ├─►┤ 21 F9: Graphic Control Ext. ├─►┤  ReadGraphicControlExtension(), and
+///   │  └─────────────────────────────┘  ▲  ReadSubblock()
 ///   │                                   │
 ///   │ FA-FF: Special Purpose blocks     │
 ///   │                           ┌◄──┐   │
 ///   │  ┌────────────────────────┴─┐ │   │
 ///   ├─►┤ 21 FE: Comment Ext. Data ├─┴──►┤  ReadExtensionLabel() and
-///   │  └──────────────────────────┘     ▲  ReadBlock()
+///   │  └──────────────────────────┘     ▲  ReadSubblock()
 ///   │                                   │
 ///   │  ┌─────────────────────────┐      │
 ///   ├─►┤ 21 FF: Application Ext. │      │  ReadExtensionLabel() and
 ///   │  └─┬───────────────────────┘      │  ReadApplicationExtension(…)
 ///   │    ▼  ┌◄──┐                       │
 ///   │  ┌─┴──┴─┐ │                       │
-///   │  │ Data ├─┴───────────────────────┘  ReadBlock()
+///   │  │ Data ├─┴───────────────────────┘  ReadSubblock()
 ///   │  └──────┘
 ///   ▼
 /// ┌─┴───────────┐
@@ -128,24 +128,24 @@ public sealed class GifReader : IDisposable
     }
 
     /// <summary>
-    /// Returns the type of the next block to read.
+    /// Returns a value indicating the part to read next.
     /// </summary>
-    /// <returns>The type of block to read.</returns>
+    /// <returns>The value indicating the part to read next.</returns>
     /// <exception cref="InvalidOperationException">The reader is not in a state where the operation
     ///     can be performed.</exception>
     /// <exception cref="InvalidDataException">The data read from the stream is invalid.</exception>
     /// <exception cref="EndOfStreamException">The end of the stream is reached.</exception>
     /// <exception cref="IOException">An I/O error occurs when reading from the stream.</exception>
-    public BlockType PeekBlockType()
+    public ReadPart Peek()
     {
         switch (_state)
         {
             case State.Header:
-                return BlockType.Header;
+                return ReadPart.Header;
             case State.LogicalScreenDescriptor:
-                return BlockType.LogicalScreenDescriptor;
+                return ReadPart.LogicalScreenDescriptor;
             case State.GlobalColorTable:
-                return BlockType.GlobalColorTable;
+                return ReadPart.GlobalColorTable;
             case State.BlockLabel:
             {
                 try
@@ -158,19 +158,19 @@ public sealed class GifReader : IDisposable
                         {
                             _state = State.ExtensionLabel;
 
-                            return BlockType.Extension;
+                            return ReadPart.ExtensionLabel;
                         }
                         case GifBlockLabel.ImageSeparator:
                         {
                             _state = State.ImageDescriptor;
 
-                            return BlockType.ImageDescriptor;
+                            return ReadPart.ImageDescriptor;
                         }
                         case GifBlockLabel.Trailer:
                         {
                             _state = State.Done;
 
-                            return BlockType.Trailer;
+                            return ReadPart.Trailer;
                         }
                         default:
                             throw new InvalidDataException("An unrecognized block label was read.");
@@ -184,18 +184,18 @@ public sealed class GifReader : IDisposable
                 }
             }
             case State.ExtensionLabel:
-                return BlockType.Extension;
+                return ReadPart.ExtensionLabel;
             case State.ImageDescriptor:
-                return BlockType.ImageDescriptor;
+                return ReadPart.ImageDescriptor;
             case State.LocalColorTable:
-                return BlockType.LocalColorTable;
+                return ReadPart.LocalColorTable;
             case State.ImageData:
-                return BlockType.ImageData;
-            case State.Block:
-            case State.Subblock:
-                return BlockType.Block;
+                return ReadPart.ImageData;
+            case State.Subblock0:
+            case State.Subblocks:
+                return ReadPart.Subblock;
             case State.Done:
-                return BlockType.Trailer;
+                return ReadPart.Trailer;
             default:
                 throw new InvalidOperationException();
         }
@@ -474,7 +474,7 @@ public sealed class GifReader : IDisposable
         {
             _extensionLabel = (GifExtensionLabel)ReadByteExactly(_stream);
 
-            _state = State.Block;
+            _state = State.Subblock0;
 
             switch (_extensionLabel)
             {
@@ -503,17 +503,17 @@ public sealed class GifReader : IDisposable
     }
 
     /// <summary>
-    /// Reads a block or sub-block.
+    /// Reads a sub-block.
     /// </summary>
-    /// <returns>The block or sub-block data; <see langword="null"/> if the block terminator was
-    ///     read.</returns>
-    /// <exception cref="InvalidOperationException">The reader is not in a state where sub-blocks
+    /// <returns>The sub-block data; <see langword="null"/> if the block terminator was read.
+    ///     </returns>
+    /// <exception cref="InvalidOperationException">The reader is not in a state where a sub-block
     ///     can be read.</exception>
     /// <exception cref="EndOfStreamException">The end of the stream is reached.</exception>
     /// <exception cref="IOException">An I/O error occurs when reading from the stream.</exception>
-    public byte[]? ReadBlock()
+    public byte[]? ReadSubblock()
     {
-        if (_state != State.Block && _state != State.Subblock)
+        if (_state != State.Subblock0 && _state != State.Subblocks)
             throw new InvalidOperationException();
 
         try
@@ -530,7 +530,7 @@ public sealed class GifReader : IDisposable
 
             _stream.ReadExactly(data);
 
-            _state = State.Subblock;
+            _state = State.Subblocks;
 
             return data;
         }
@@ -543,20 +543,21 @@ public sealed class GifReader : IDisposable
     }
 
     /// <summary>
-    /// Reads a Graphic Control Extension.
+    /// Reads the first sub-block of a Graphic Control Extension.
     /// </summary>
-    /// <returns>The extension.</returns>
-    /// <exception cref="InvalidOperationException">The reader is not in a state where a Graphic
-    ///     Control Extension can be read.</exception>
+    /// <returns>The sub-block.</returns>
+    /// <exception cref="InvalidOperationException">The reader is not in a state where the first
+    ///     sub-block of a Graphic Control Extension can be read.</exception>
     /// <exception cref="InvalidDataException">The data read from the stream is invalid.</exception>
     /// <exception cref="EndOfStreamException">The end of the stream is reached.</exception>
     /// <exception cref="IOException">An I/O error occurs when reading from the stream.</exception>
     /// <remarks>
-    /// This extension has no sub-blocks and the block terminator is read by this method.
+    /// Use <see cref="ReadSubblock"/> to read the remaining sub-blocks of the block.  There should
+    /// be none.
     /// </remarks>
     public GifGraphicControlExtension ReadGraphicControlExtension()
     {
-        if (_state != State.Block ||
+        if (_state != State.Subblock0 ||
             _blockLabel != GifBlockLabel.ExtensionIntroducer ||
             _extensionLabel != GifExtensionLabel.GraphicControl)
         {
@@ -565,11 +566,9 @@ public sealed class GifReader : IDisposable
 
         try
         {
-            Span<byte> blocks = stackalloc byte[5 + 1];
+            Span<byte> block = stackalloc byte[5];
 
-            _stream.ReadExactly(blocks);
-
-            Span<byte> block = blocks.Slice(0, 5);
+            _stream.ReadExactly(block);
 
             if (block[0] != 4)  // Block Size
                 throw new InvalidDataException("Invalid block size.");
@@ -589,12 +588,7 @@ public sealed class GifReader : IDisposable
                     throw new InvalidDataException("Disposal method is undefined in format version.");
             }
 
-            block = blocks.Slice(5, 1);
-
-            if (block[0] != 0)  // Block Terminator
-                throw new InvalidDataException("Unexpected sub-block.");
-
-            _state = State.BlockLabel;
+            _state = State.Subblocks;
 
             return extension;
         }
@@ -607,21 +601,21 @@ public sealed class GifReader : IDisposable
     }
 
     /// <summary>
-    /// Reads a Plain Text Extension block.
+    /// Reads the first sub-block of a Plain Text Extension.
     /// </summary>
-    /// <returns>The extension.</returns>
-    /// <exception cref="InvalidOperationException">The reader is not in a state where a Plain Text
-    ///     Extension can be read.</exception>
+    /// <returns>The sub-block.</returns>
+    /// <exception cref="InvalidOperationException">The reader is not in a state where the first
+    ///     sub-block of a Plain Text Extension can be read.</exception>
     /// <exception cref="InvalidDataException">The data read from the stream is invalid.</exception>
     /// <exception cref="EndOfStreamException">The end of the stream is reached.</exception>
     /// <exception cref="IOException">An I/O error occurs when reading from the stream.</exception>
     /// <remarks>
-    /// Use <see cref="ReadBlock"/> to read the sub-blocks of the extension, which contain the text
-    /// data.
+    /// Use <see cref="ReadSubblock"/> to read the remaining sub-blocks of the block, which contain
+    /// the text data.
     /// </remarks>
     public GifPlainTextExtension ReadPlainTextExtension()
     {
-        if (_state != State.Block ||
+        if (_state != State.Subblock0 ||
             _blockLabel != GifBlockLabel.ExtensionIntroducer ||
             _extensionLabel != GifExtensionLabel.PlainText)
         {
@@ -649,7 +643,7 @@ public sealed class GifReader : IDisposable
                 BackgroundColorIndex = block[12],
             };
 
-            _state = State.Subblock;
+            _state = State.Subblocks;
 
             return extension;
         }
@@ -662,7 +656,7 @@ public sealed class GifReader : IDisposable
     }
 
     /// <summary>
-    /// Reads an Application Extension block.
+    /// Reads the first sub-block of an Application Extension.
     /// </summary>
     /// <param name="applicationIdentifier">Returns the application identifier.</param>
     /// <param name="applicationAuthenticationCode">Returns the application authentication code.
@@ -671,14 +665,14 @@ public sealed class GifReader : IDisposable
     ///     is not 8.</exception>
     /// <exception cref="ArgumentException">The length of
     ///     <paramref name="applicationAuthenticationCode"/> is not 3.</exception>
-    /// <exception cref="InvalidOperationException">The reader is not in a state where an
-    ///     Application Extension can be read.</exception>
+    /// <exception cref="InvalidOperationException">The reader is not in a state where the first
+    ///     sub-block of an Application Extension can be read.</exception>
     /// <exception cref="InvalidDataException">The data read from the stream is invalid.</exception>
     /// <exception cref="EndOfStreamException">The end of the stream is reached.</exception>
     /// <exception cref="IOException">An I/O error occurs when reading from the stream.</exception>
     /// <remarks>
-    /// Use <see cref="ReadBlock"/> to read the sub-blocks of the extension, which contain the
-    /// application data.
+    /// Use <see cref="ReadSubblock"/> to read the remaining sub-blocks of the block, which contain
+    /// the application data.
     /// </remarks>
     /// <seealso cref="ReadNetscapeApplicationExtensionSubblock"/>
     public void ReadApplicationExtension(Span<byte> applicationIdentifier, Span<byte> applicationAuthenticationCode)
@@ -688,7 +682,7 @@ public sealed class GifReader : IDisposable
         if (applicationAuthenticationCode.Length != 3)
             throw new ArgumentException("Invalid length.", nameof(applicationAuthenticationCode));
 
-        if (_state != State.Block ||
+        if (_state != State.Subblock0 ||
             _blockLabel != GifBlockLabel.ExtensionIntroducer ||
             _extensionLabel != GifExtensionLabel.Application)
         {
@@ -707,7 +701,7 @@ public sealed class GifReader : IDisposable
             block.Slice(1, 8).CopyTo(applicationIdentifier);
             block.Slice(9, 3).CopyTo(applicationAuthenticationCode);
 
-            _state = State.Subblock;
+            _state = State.Subblocks;
         }
         catch
         {
@@ -718,11 +712,11 @@ public sealed class GifReader : IDisposable
     }
 
     /// <summary>
-    /// Reads a Netscape 2.0 Application Extension sub-block.
+    /// Reads a sub-block of a Netscape 2.0 Application Extension.
     /// </summary>
     /// <returns>The sub-block.</returns>
-    /// <exception cref="InvalidOperationException">The reader is not in a state where a Netscape
-    ///     2.0 Application Extension sub-block can be read.</exception>
+    /// <exception cref="InvalidOperationException">The reader is not in a state where a sub-block
+    ///     of an Application Extension can be read.</exception>
     /// <exception cref="InvalidDataException">The data read from the stream is invalid.</exception>
     /// <exception cref="EndOfStreamException">The end of the stream is reached.</exception>
     /// <exception cref="IOException">An I/O error occurs when reading from the stream.</exception>
@@ -730,7 +724,7 @@ public sealed class GifReader : IDisposable
     {
         // https://github.com/mozilla/gecko-dev/blob/5836a062726f715fda621338a17b51aff30d0a8c/image/decoders/nsGIFDecoder2.cpp#L761
 
-        if (_state != State.Subblock ||
+        if (_state != State.Subblocks ||
             _blockLabel != GifBlockLabel.ExtensionIntroducer ||
             _extensionLabel != GifExtensionLabel.Application)
         {
@@ -972,9 +966,9 @@ public sealed class GifReader : IDisposable
     }
 
     /// <summary>
-    /// Represents the type of block to read next.
+    /// Indicates the part to read next.
     /// </summary>
-    public enum BlockType
+    public enum ReadPart
     {
         /// <summary>
         /// A Header.
@@ -1013,16 +1007,16 @@ public sealed class GifReader : IDisposable
         ImageData,
 
         /// <summary>
-        /// An extension.
+        /// An extension label.
         /// </summary>
         /// <seealso cref="ReadExtensionLabel"/>
-        Extension,
+        ExtensionLabel,
 
         /// <summary>
-        /// A block or sub-block.
+        /// A sub-block.
         /// </summary>
-        /// <seealso cref="ReadBlock"/>
-        Block,
+        /// <seealso cref="ReadSubblock"/>
+        Subblock,
 
         /// <summary>
         /// A Trailer, which indicates the end of the data stream.
@@ -1040,8 +1034,8 @@ public sealed class GifReader : IDisposable
         ImageDescriptor,
         LocalColorTable,
         ImageData,
-        Block,
-        Subblock,
+        Subblock0,
+        Subblocks,
         Done,
         Error,
     }

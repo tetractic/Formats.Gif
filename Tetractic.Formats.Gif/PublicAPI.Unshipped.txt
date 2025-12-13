@@ -1,1 +1,138 @@
-﻿
+﻿static Tetractic.Formats.Gif.NetscapeApplicationExtension.ApplicationAuthenticationCode.get -> System.ReadOnlySpan<byte>
+static Tetractic.Formats.Gif.NetscapeApplicationExtension.ApplicationIdentifier.get -> System.ReadOnlySpan<byte>
+Tetractic.Formats.Gif.GifColor
+Tetractic.Formats.Gif.GifColor.B.get -> byte
+Tetractic.Formats.Gif.GifColor.G.get -> byte
+Tetractic.Formats.Gif.GifColor.GifColor() -> void
+Tetractic.Formats.Gif.GifColor.GifColor(byte r, byte g, byte b) -> void
+Tetractic.Formats.Gif.GifColor.R.get -> byte
+Tetractic.Formats.Gif.GifDisposalMethod
+Tetractic.Formats.Gif.GifDisposalMethod.DoNotDispose = 1 -> Tetractic.Formats.Gif.GifDisposalMethod
+Tetractic.Formats.Gif.GifDisposalMethod.RestoreToBackground = 2 -> Tetractic.Formats.Gif.GifDisposalMethod
+Tetractic.Formats.Gif.GifDisposalMethod.RestoreToPrevious = 3 -> Tetractic.Formats.Gif.GifDisposalMethod
+Tetractic.Formats.Gif.GifDisposalMethod.Unspecified = 0 -> Tetractic.Formats.Gif.GifDisposalMethod
+Tetractic.Formats.Gif.GifExtensionLabel
+Tetractic.Formats.Gif.GifExtensionLabel.Application = 255 -> Tetractic.Formats.Gif.GifExtensionLabel
+Tetractic.Formats.Gif.GifExtensionLabel.Comment = 254 -> Tetractic.Formats.Gif.GifExtensionLabel
+Tetractic.Formats.Gif.GifExtensionLabel.GraphicControl = 249 -> Tetractic.Formats.Gif.GifExtensionLabel
+Tetractic.Formats.Gif.GifExtensionLabel.PlainText = 1 -> Tetractic.Formats.Gif.GifExtensionLabel
+Tetractic.Formats.Gif.GifGraphicControlExtension
+Tetractic.Formats.Gif.GifGraphicControlExtension.DelayTime.get -> ushort
+Tetractic.Formats.Gif.GifGraphicControlExtension.DelayTime.init -> void
+Tetractic.Formats.Gif.GifGraphicControlExtension.DisposalMethod.get -> Tetractic.Formats.Gif.GifDisposalMethod
+Tetractic.Formats.Gif.GifGraphicControlExtension.DisposalMethod.init -> void
+Tetractic.Formats.Gif.GifGraphicControlExtension.GifGraphicControlExtension() -> void
+Tetractic.Formats.Gif.GifGraphicControlExtension.HasTransparentColor.get -> bool
+Tetractic.Formats.Gif.GifGraphicControlExtension.HasTransparentColor.init -> void
+Tetractic.Formats.Gif.GifGraphicControlExtension.TransparentColorIndex.get -> byte
+Tetractic.Formats.Gif.GifGraphicControlExtension.TransparentColorIndex.init -> void
+Tetractic.Formats.Gif.GifGraphicControlExtension.UserInput.get -> bool
+Tetractic.Formats.Gif.GifGraphicControlExtension.UserInput.init -> void
+Tetractic.Formats.Gif.GifImageDescriptor
+Tetractic.Formats.Gif.GifImageDescriptor.GifImageDescriptor() -> void
+Tetractic.Formats.Gif.GifImageDescriptor.HasLocalColorTable.get -> bool
+Tetractic.Formats.Gif.GifImageDescriptor.HasLocalColorTable.init -> void
+Tetractic.Formats.Gif.GifImageDescriptor.Height.get -> ushort
+Tetractic.Formats.Gif.GifImageDescriptor.Height.init -> void
+Tetractic.Formats.Gif.GifImageDescriptor.Interlaced.get -> bool
+Tetractic.Formats.Gif.GifImageDescriptor.Interlaced.init -> void
+Tetractic.Formats.Gif.GifImageDescriptor.Left.get -> ushort
+Tetractic.Formats.Gif.GifImageDescriptor.Left.init -> void
+Tetractic.Formats.Gif.GifImageDescriptor.LocalColorTableSize.get -> byte
+Tetractic.Formats.Gif.GifImageDescriptor.LocalColorTableSize.init -> void
+Tetractic.Formats.Gif.GifImageDescriptor.Sorted.get -> bool
+Tetractic.Formats.Gif.GifImageDescriptor.Sorted.init -> void
+Tetractic.Formats.Gif.GifImageDescriptor.Top.get -> ushort
+Tetractic.Formats.Gif.GifImageDescriptor.Top.init -> void
+Tetractic.Formats.Gif.GifImageDescriptor.Width.get -> ushort
+Tetractic.Formats.Gif.GifImageDescriptor.Width.init -> void
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.BackgroundColorIndex.get -> byte
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.BackgroundColorIndex.init -> void
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.ColorResolution.get -> byte
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.ColorResolution.init -> void
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.GifLogicalScreenDescriptor() -> void
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.GlobalColorTableSize.get -> byte
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.GlobalColorTableSize.init -> void
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.HasGlobalColorTable.get -> bool
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.HasGlobalColorTable.init -> void
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.Height.get -> ushort
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.Height.init -> void
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.PixelAspectRatio.get -> byte
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.PixelAspectRatio.init -> void
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.Sorted.get -> bool
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.Sorted.init -> void
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.Width.get -> ushort
+Tetractic.Formats.Gif.GifLogicalScreenDescriptor.Width.init -> void
+Tetractic.Formats.Gif.GifPlainTextExtension
+Tetractic.Formats.Gif.GifPlainTextExtension.BackgroundColorIndex.get -> byte
+Tetractic.Formats.Gif.GifPlainTextExtension.BackgroundColorIndex.init -> void
+Tetractic.Formats.Gif.GifPlainTextExtension.CellHeight.get -> byte
+Tetractic.Formats.Gif.GifPlainTextExtension.CellHeight.init -> void
+Tetractic.Formats.Gif.GifPlainTextExtension.CellWidth.get -> byte
+Tetractic.Formats.Gif.GifPlainTextExtension.CellWidth.init -> void
+Tetractic.Formats.Gif.GifPlainTextExtension.ForegroundColorIndex.get -> byte
+Tetractic.Formats.Gif.GifPlainTextExtension.ForegroundColorIndex.init -> void
+Tetractic.Formats.Gif.GifPlainTextExtension.GifPlainTextExtension() -> void
+Tetractic.Formats.Gif.GifPlainTextExtension.Height.get -> ushort
+Tetractic.Formats.Gif.GifPlainTextExtension.Height.init -> void
+Tetractic.Formats.Gif.GifPlainTextExtension.Left.get -> ushort
+Tetractic.Formats.Gif.GifPlainTextExtension.Left.init -> void
+Tetractic.Formats.Gif.GifPlainTextExtension.Top.get -> ushort
+Tetractic.Formats.Gif.GifPlainTextExtension.Top.init -> void
+Tetractic.Formats.Gif.GifPlainTextExtension.Width.get -> ushort
+Tetractic.Formats.Gif.GifPlainTextExtension.Width.init -> void
+Tetractic.Formats.Gif.GifReader
+Tetractic.Formats.Gif.GifReader.Dispose() -> void
+Tetractic.Formats.Gif.GifReader.GifReader(System.IO.Stream! stream, bool leaveOpen = false) -> void
+Tetractic.Formats.Gif.GifReader.Peek() -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadApplicationExtension(System.Span<byte> applicationIdentifier, System.Span<byte> applicationAuthenticationCode) -> void
+Tetractic.Formats.Gif.GifReader.ReadColorTable() -> Tetractic.Formats.Gif.GifColor[]!
+Tetractic.Formats.Gif.GifReader.ReadExtensionLabel() -> Tetractic.Formats.Gif.GifExtensionLabel
+Tetractic.Formats.Gif.GifReader.ReadGraphicControlExtension() -> Tetractic.Formats.Gif.GifGraphicControlExtension
+Tetractic.Formats.Gif.GifReader.ReadHeader() -> Tetractic.Formats.Gif.GifVersion
+Tetractic.Formats.Gif.GifReader.ReadImageData() -> byte[]!
+Tetractic.Formats.Gif.GifReader.ReadImageDescriptor() -> Tetractic.Formats.Gif.GifImageDescriptor
+Tetractic.Formats.Gif.GifReader.ReadLogicalScreenDescriptor() -> Tetractic.Formats.Gif.GifLogicalScreenDescriptor
+Tetractic.Formats.Gif.GifReader.ReadNetscapeApplicationExtensionSubblock() -> Tetractic.Formats.Gif.NetscapeApplicationExtension.Subblock?
+Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPart.ExtensionLabel = 6 -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPart.GlobalColorTable = 2 -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPart.Header = 0 -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPart.ImageData = 5 -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPart.ImageDescriptor = 3 -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPart.LocalColorTable = 4 -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPart.LogicalScreenDescriptor = 1 -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPart.Subblock = 7 -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPart.Trailer = 8 -> Tetractic.Formats.Gif.GifReader.ReadPart
+Tetractic.Formats.Gif.GifReader.ReadPlainTextExtension() -> Tetractic.Formats.Gif.GifPlainTextExtension
+Tetractic.Formats.Gif.GifReader.ReadSubblock() -> byte[]?
+Tetractic.Formats.Gif.GifVersion
+Tetractic.Formats.Gif.GifVersion.Version87a = 0 -> Tetractic.Formats.Gif.GifVersion
+Tetractic.Formats.Gif.GifVersion.Version89a = 52 -> Tetractic.Formats.Gif.GifVersion
+Tetractic.Formats.Gif.GifWriter
+Tetractic.Formats.Gif.GifWriter.Dispose() -> void
+Tetractic.Formats.Gif.GifWriter.GifWriter(System.IO.Stream! stream, bool leaveOpen = false) -> void
+Tetractic.Formats.Gif.GifWriter.WriteApplicationExtension(System.ReadOnlySpan<byte> applicationIdentifier, System.ReadOnlySpan<byte> applicationAuthenticationCode) -> void
+Tetractic.Formats.Gif.GifWriter.WriteBlockTerminator() -> void
+Tetractic.Formats.Gif.GifWriter.WriteColorTable(System.ReadOnlySpan<Tetractic.Formats.Gif.GifColor> colors) -> void
+Tetractic.Formats.Gif.GifWriter.WriteExtensionLabel(Tetractic.Formats.Gif.GifExtensionLabel label) -> void
+Tetractic.Formats.Gif.GifWriter.WriteGraphicControlExtension(Tetractic.Formats.Gif.GifGraphicControlExtension extension) -> void
+Tetractic.Formats.Gif.GifWriter.WriteHeader(Tetractic.Formats.Gif.GifVersion version) -> void
+Tetractic.Formats.Gif.GifWriter.WriteImageData(System.ReadOnlySpan<byte> imageData) -> void
+Tetractic.Formats.Gif.GifWriter.WriteImageDescriptor(Tetractic.Formats.Gif.GifImageDescriptor descriptor) -> void
+Tetractic.Formats.Gif.GifWriter.WriteLogicalScreenDescriptor(Tetractic.Formats.Gif.GifLogicalScreenDescriptor descriptor) -> void
+Tetractic.Formats.Gif.GifWriter.WriteNetscapeApplicationExtensionSubblock(Tetractic.Formats.Gif.NetscapeApplicationExtension.Subblock! subblock) -> void
+Tetractic.Formats.Gif.GifWriter.WritePlainTextExtension(Tetractic.Formats.Gif.GifPlainTextExtension extension) -> void
+Tetractic.Formats.Gif.GifWriter.WriteSubblock(System.ReadOnlySpan<byte> data) -> void
+Tetractic.Formats.Gif.GifWriter.WriteTrailer() -> void
+Tetractic.Formats.Gif.NetscapeApplicationExtension
+Tetractic.Formats.Gif.NetscapeApplicationExtension.BufferingSubblock
+Tetractic.Formats.Gif.NetscapeApplicationExtension.BufferingSubblock.BufferingSubblock() -> void
+Tetractic.Formats.Gif.NetscapeApplicationExtension.BufferingSubblock.BufferLength.get -> uint
+Tetractic.Formats.Gif.NetscapeApplicationExtension.BufferingSubblock.BufferLength.init -> void
+Tetractic.Formats.Gif.NetscapeApplicationExtension.LoopingSubblock
+Tetractic.Formats.Gif.NetscapeApplicationExtension.LoopingSubblock.LoopCount.get -> ushort
+Tetractic.Formats.Gif.NetscapeApplicationExtension.LoopingSubblock.LoopCount.init -> void
+Tetractic.Formats.Gif.NetscapeApplicationExtension.LoopingSubblock.LoopingSubblock() -> void
+Tetractic.Formats.Gif.NetscapeApplicationExtension.Subblock

@@ -12,7 +12,8 @@ using System;
 namespace Tetractic.Formats.Gif;
 
 /// <summary>
-/// A Graphic Control Extension, which describes how a graphic rendering block should be processed.
+/// The first sub-block of a Graphic Control Extension, which describes how a graphic rendering
+/// block should be processed.
 /// </summary>
 public readonly struct GifGraphicControlExtension
 {

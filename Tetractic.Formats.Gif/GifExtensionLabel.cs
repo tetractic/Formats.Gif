@@ -31,9 +31,9 @@ public enum GifExtensionLabel : byte
     /// <summary>
     /// A Comment Extension.
     /// </summary>
-    /// <seealso cref="GifReader.ReadBlock"/>
+    /// <seealso cref="GifReader.ReadSubblock"/>
     /// <seealso cref="GifWriter.WriteExtensionLabel(GifExtensionLabel)"/>
-    /// <seealso cref="GifWriter.WriteBlock(System.ReadOnlySpan{byte})"/>
+    /// <seealso cref="GifWriter.WriteSubblock(System.ReadOnlySpan{byte})"/>
     /// <seealso cref="GifWriter.WriteBlockTerminator"/>
     Comment = 0xFE,
 
