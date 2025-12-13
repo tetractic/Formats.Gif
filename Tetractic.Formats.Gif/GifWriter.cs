@@ -351,12 +351,8 @@ public sealed class GifWriter : IDisposable
     ///     Image Data can be written.</exception>
     /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
     // ExceptionAdjustment: M:System.IO.Stream.Write(System.ReadOnlySpan{System.Byte}) -T:System.NotSupportedException
-    // ExceptionAdjustment: M:System.IO.Stream.WriteByte(System.Byte) -T:System.NotSupportedException
     public void WriteImageData(ReadOnlySpan<byte> imageData)
     {
-        if (_state != State.ImageData)
-            throw new InvalidOperationException();
-
         if (imageData.Length != _width * _height)
             throw new InvalidOperationException("Invalid image data length for image dimensions.");
 
@@ -366,13 +362,52 @@ public sealed class GifWriter : IDisposable
 
         byte minCodeSize = byte.Max(2, (byte)(8 - byte.LeadingZeroCount(usedBits)));
 
+        WriteImageDataHeader(minCodeSize);
+
+        Debug.Assert(_state == State.Subblock0);
+
+        try
+        {
+            WriteImageDataCore(imageData, minCodeSize, _stream);
+
+            _state = State.BlockLabel;
+        }
+        catch
+        {
+            _state = State.Error;
+
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Writes the header for Table-Based Image Data.
+    /// </summary>
+    /// <param name="minCodeSize">The LZW minimum code size.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="minCodeSize"/> is less than 2
+    ///     or is greater than 8.</exception>
+    /// <exception cref="InvalidOperationException">The writer is not in a state where Table-Based
+    ///     Image Data can be written.</exception>
+    /// <exception cref="IOException">An I/O error occurs when writing to the stream.</exception>
+    /// <remarks>
+    /// Use <see cref="WriteSubblock(ReadOnlySpan{byte})"/> and <see cref="WriteBlockTerminator"/>
+    /// to write the sub-blocks of the block, which contain the LZW code stream.
+    /// </remarks>
+    /// <seealso cref="WriteImageData(ReadOnlySpan{byte})"/>
+    // ExceptionAdjustment: M:System.IO.Stream.WriteByte(System.Byte) -T:System.NotSupportedException
+    public void WriteImageDataHeader(byte minCodeSize)
+    {
+        if (minCodeSize < 2 || minCodeSize > 8)
+            throw new ArgumentOutOfRangeException(nameof(minCodeSize));
+
+        if (_state != State.ImageData)
+            throw new InvalidOperationException();
+
         try
         {
             _stream.WriteByte(minCodeSize);
 
-            WriteImageDataCore(imageData, minCodeSize, _stream);
-
-            _state = State.BlockLabel;
+            _state = State.Subblock0;
         }
         catch
         {

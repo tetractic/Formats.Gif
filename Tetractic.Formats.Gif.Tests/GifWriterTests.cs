@@ -531,6 +531,61 @@ public class GifWriterTests
     }
 
     [Fact]
+    public static void WriteImageDataHeader_InvalidState_ThrowsInvalidOperationException()
+    {
+        using (var stream = new MemoryStream())
+        using (var writer = new GifWriter(stream))
+        {
+            var ex = Assert.Throws<InvalidOperationException>(() => writer.WriteImageDataHeader(2));
+
+            Assert.Equal(new InvalidOperationException().Message, ex.Message);
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(9)]
+    public static void WriteImageDataHeader_InvalidCodeSize_ThrowsInvalidOperationException(byte minCodeSize)
+    {
+        using (var stream = new MemoryStream())
+        using (var writer = new GifWriter(stream))
+        {
+            writer.WriteHeader(GifVersion.Version87a);
+
+            writer.WriteLogicalScreenDescriptor(default);
+
+            writer.WriteImageDescriptor(default);
+
+            var ex = Assert.Throws<ArgumentOutOfRangeException>(() => writer.WriteImageDataHeader(minCodeSize));
+
+            Assert.Equal("minCodeSize", ex.ParamName);
+        }
+    }
+
+    [Theory]
+    [InlineData(2, new byte[] { 0x02 })]
+    [InlineData(8, new byte[] { 0x08 })]
+    public static void WriteImageDataHeader_Valid_WritesExpectedBytes(byte minCodeSize, byte[] expectedBytes)
+    {
+        using (var stream = new MemoryStream())
+        using (var writer = new GifWriter(stream))
+        {
+            writer.WriteHeader(GifVersion.Version87a);
+
+            writer.WriteLogicalScreenDescriptor(default);
+
+            writer.WriteImageDescriptor(default);
+
+            stream.SetLength(0);
+
+            writer.WriteImageDataHeader(minCodeSize);
+
+            Assert.Equal(expectedBytes, stream.ToArray());
+        }
+    }
+
+    [Fact]
     public static void WriteExtensionLabel_InvalidState_ThrowsInvalidOperationException()
     {
         using (var stream = new MemoryStream())
@@ -653,6 +708,29 @@ public class GifWriterTests
         { new byte[] { 0x01, 0x02 }, new byte[] { 0x02, 0x01, 0x02 } },
         { [.. _255bytes], [0xFF, .. _255bytes] },
     };
+
+    [Theory]
+    [MemberData(nameof(WriteSubblock_Data))]
+    public static void WriteSubblock_AfterWriteImageDataHeader_WritesExpectedBytes(byte[] data, byte[] expectedBytes)
+    {
+        using (var stream = new MemoryStream())
+        using (var writer = new GifWriter(stream))
+        {
+            writer.WriteHeader(GifVersion.Version87a);
+
+            writer.WriteLogicalScreenDescriptor(default);
+
+            writer.WriteImageDescriptor(default);
+
+            writer.WriteImageDataHeader(2);
+
+            stream.SetLength(0);
+
+            writer.WriteSubblock(data);
+
+            Assert.Equal(expectedBytes, stream.ToArray());
+        }
+    }
 
     [Theory]
     [MemberData(nameof(WriteSubblock_Data))]

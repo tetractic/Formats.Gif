@@ -430,10 +430,46 @@ public sealed class GifReader : IDisposable
     /// <exception cref="IOException">An I/O error occurs when reading from the stream.</exception>
     public byte[] ReadImageData()
     {
+        byte[] imageData = new byte[_width * _height];
+
+        byte rawCodeSize = ReadImageDataHeader();
+
+        Debug.Assert(_state == State.Subblock0);
+
+        try
+        {
+            ReadImageDataCore(_stream, rawCodeSize, imageData);
+
+            _state = State.BlockLabel;
+
+            return imageData;
+        }
+        catch
+        {
+            _state = State.Error;
+
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Reads the header of Table-Based Image Data.
+    /// </summary>
+    /// <returns>The LZW minimum code size.</returns>
+    /// <exception cref="InvalidOperationException">The reader is not in a state where Table-Based
+    ///     Image Data can be read.</exception>
+    /// <exception cref="InvalidDataException">The data read from the stream is invalid.</exception>
+    /// <exception cref="EndOfStreamException">The end of the stream is reached.</exception>
+    /// <exception cref="IOException">An I/O error occurs when reading from the stream.</exception>
+    /// <remarks>
+    /// Use <see cref="ReadSubblock"/> to read the remaining sub-blocks of the block, which contain
+    /// the LZW code stream.
+    /// </remarks>
+    /// <seealso cref="ReadImageData"/>
+    public byte ReadImageDataHeader()
+    {
         if (_state != State.ImageData)
             throw new InvalidOperationException();
-
-        byte[] imageData = new byte[_width * _height];
 
         try
         {
@@ -442,11 +478,9 @@ public sealed class GifReader : IDisposable
             if (rawCodeSize < 2 || rawCodeSize > 8)
                 throw new InvalidDataException("Invalid LZW code size.");
 
-            ReadImageDataCore(_stream, rawCodeSize, imageData);
+            _state = State.Subblock0;
 
-            _state = State.BlockLabel;
-
-            return imageData;
+            return rawCodeSize;
         }
         catch
         {

@@ -92,6 +92,7 @@ Tetractic.Formats.Gif.GifReader.ReadExtensionLabel() -> Tetractic.Formats.Gif.Gi
 Tetractic.Formats.Gif.GifReader.ReadGraphicControlExtension() -> Tetractic.Formats.Gif.GifGraphicControlExtension
 Tetractic.Formats.Gif.GifReader.ReadHeader() -> Tetractic.Formats.Gif.GifVersion
 Tetractic.Formats.Gif.GifReader.ReadImageData() -> byte[]!
+Tetractic.Formats.Gif.GifReader.ReadImageDataHeader() -> byte
 Tetractic.Formats.Gif.GifReader.ReadImageDescriptor() -> Tetractic.Formats.Gif.GifImageDescriptor
 Tetractic.Formats.Gif.GifReader.ReadLogicalScreenDescriptor() -> Tetractic.Formats.Gif.GifLogicalScreenDescriptor
 Tetractic.Formats.Gif.GifReader.ReadNetscapeApplicationExtensionSubblock() -> Tetractic.Formats.Gif.NetscapeApplicationExtension.Subblock?
@@ -120,6 +121,7 @@ Tetractic.Formats.Gif.GifWriter.WriteExtensionLabel(Tetractic.Formats.Gif.GifExt
 Tetractic.Formats.Gif.GifWriter.WriteGraphicControlExtension(Tetractic.Formats.Gif.GifGraphicControlExtension extension) -> void
 Tetractic.Formats.Gif.GifWriter.WriteHeader(Tetractic.Formats.Gif.GifVersion version) -> void
 Tetractic.Formats.Gif.GifWriter.WriteImageData(System.ReadOnlySpan<byte> imageData) -> void
+Tetractic.Formats.Gif.GifWriter.WriteImageDataHeader(byte minCodeSize) -> void
 Tetractic.Formats.Gif.GifWriter.WriteImageDescriptor(Tetractic.Formats.Gif.GifImageDescriptor descriptor) -> void
 Tetractic.Formats.Gif.GifWriter.WriteLogicalScreenDescriptor(Tetractic.Formats.Gif.GifLogicalScreenDescriptor descriptor) -> void
 Tetractic.Formats.Gif.GifWriter.WriteNetscapeApplicationExtensionSubblock(Tetractic.Formats.Gif.NetscapeApplicationExtension.Subblock! subblock) -> void

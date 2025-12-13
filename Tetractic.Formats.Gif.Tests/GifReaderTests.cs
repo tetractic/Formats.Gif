@@ -1116,6 +1116,7 @@ public static class GifReaderTests
             .. "GIF87a"u8,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x02,
         ];
 
         using (var stream = new MemoryStream(bytes))
@@ -1131,36 +1132,6 @@ public static class GifReaderTests
             var ex = Assert.Throws<EndOfStreamException>(reader.ReadImageData);
 
             AssertIsErrorState(reader);
-        }
-    }
-
-    [Theory]
-    [InlineData(new byte[] { 0x00 })]
-    [InlineData(new byte[] { 0x01 })]
-    [InlineData(new byte[] { 0x09 })]
-    public static void ReadImageData_InvalidCodeSize_ThrowsInvalidDataException(byte[] blockBytes)
-    {
-        byte[] bytes =
-        [
-            .. "GIF87a"u8,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            .. blockBytes
-        ];
-
-        using (var stream = new MemoryStream(bytes))
-        using (var reader = new GifReader(stream))
-        {
-            _ = reader.ReadHeader();
-
-            _ = reader.ReadLogicalScreenDescriptor();
-
-            _ = reader.Peek();
-            _ = reader.ReadImageDescriptor();
-
-            var ex = Assert.Throws<InvalidDataException>(reader.ReadImageData);
-
-            Assert.Equal("Invalid LZW code size.", ex.Message);
         }
     }
 
@@ -1414,6 +1385,108 @@ public static class GifReaderTests
     }
 
     [Fact]
+    public static void ReadImageDataHeader_InvalidState_ThrowsInvalidOperationException()
+    {
+        byte[] bytes =
+        [
+            .. "GIF87a"u8,
+        ];
+
+        using (var stream = new MemoryStream(bytes))
+        using (var reader = new GifReader(stream))
+        {
+            var ex = Assert.Throws<InvalidOperationException>(() => reader.ReadImageDataHeader());
+
+            Assert.Equal(new InvalidOperationException().Message, ex.Message);
+        }
+    }
+
+    [Fact]
+    public static void ReadImageDataHeader_EndOfFile_ThrowsEndOfStreamException()
+    {
+        byte[] bytes =
+        [
+            .. "GIF87a"u8,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ];
+
+        using (var stream = new MemoryStream(bytes))
+        using (var reader = new GifReader(stream))
+        {
+            _ = reader.ReadHeader();
+
+            _ = reader.ReadLogicalScreenDescriptor();
+
+            _ = reader.Peek();
+            _ = reader.ReadImageDescriptor();
+
+            var ex = Assert.Throws<EndOfStreamException>(() => reader.ReadImageDataHeader());
+
+            AssertIsErrorState(reader);
+        }
+    }
+
+    [Theory]
+    [InlineData(new byte[] { 0x00 })]
+    [InlineData(new byte[] { 0x01 })]
+    [InlineData(new byte[] { 0x09 })]
+    public static void ReadImageDataHeader_InvalidCodeSize_ThrowsInvalidDataException(byte[] blockBytes)
+    {
+        byte[] bytes =
+        [
+            .. "GIF87a"u8,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            .. blockBytes
+        ];
+
+        using (var stream = new MemoryStream(bytes))
+        using (var reader = new GifReader(stream))
+        {
+            _ = reader.ReadHeader();
+
+            _ = reader.ReadLogicalScreenDescriptor();
+
+            _ = reader.Peek();
+            _ = reader.ReadImageDescriptor();
+
+            var ex = Assert.Throws<InvalidDataException>(() => reader.ReadImageDataHeader());
+
+            Assert.Equal("Invalid LZW code size.", ex.Message);
+        }
+    }
+
+    [Theory]
+    [InlineData(new byte[] { 0x02 }, 2)]
+    [InlineData(new byte[] { 0x08 }, 8)]
+    public static void ReadImageDataHeader_Valid_ReturnsExpectedResult(byte[] blockBytes, byte expectedMinCodeSize)
+    {
+        byte[] bytes =
+        [
+            .. "GIF87a"u8,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            .. blockBytes
+        ];
+
+        using (var stream = new MemoryStream(bytes))
+        using (var reader = new GifReader(stream))
+        {
+            _ = reader.ReadHeader();
+
+            _ = reader.ReadLogicalScreenDescriptor();
+
+            _ = reader.Peek();
+            _ = reader.ReadImageDescriptor();
+
+            byte minCodeSize = reader.ReadImageDataHeader();
+
+            Assert.Equal(expectedMinCodeSize, minCodeSize);
+        }
+    }
+
+    [Fact]
     public static void ReadExtensionLabel_InvalidState_ThrowsInvalidOperationException()
     {
         byte[] bytes = [];
@@ -1629,6 +1702,38 @@ public static class GifReaderTests
         { new byte[] { 0x02, 0x01, 0x02 }, new byte[] { 0x01, 0x02 } },
         { [0xFF, .. _255bytes], [.. _255bytes] },
     };
+
+    [Theory]
+    [MemberData(nameof(ReadSubblock_Data))]
+    public static void ReadSubblock_AfterReadImageDataHeader_ReturnsExpectedResult(byte[] blockBytes, byte[] expectedResult)
+    {
+        byte[] bytes =
+        [
+            .. "GIF87a"u8,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x2C, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x00,
+            0x02,
+            .. blockBytes
+        ];
+
+        using (var stream = new MemoryStream(bytes))
+        using (var reader = new GifReader(stream))
+        {
+            _ = reader.ReadHeader();
+
+            _ = reader.ReadLogicalScreenDescriptor();
+
+            var part = reader.Peek();
+            Debug.Assert(part == GifReader.ReadPart.ImageDescriptor);
+            _ = reader.ReadImageDescriptor();
+
+            _ = reader.ReadImageDataHeader();
+
+            byte[]? result = reader.ReadSubblock();
+
+            Assert.Equal(expectedResult, result);
+        }
+    }
 
     [Theory]
     [MemberData(nameof(ReadSubblock_Data))]
