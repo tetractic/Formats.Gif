@@ -12,7 +12,7 @@
     <EnableCodeStyleSeverity>true</EnableCodeStyleSeverity>
 
     <VersionPrefix>2.0.0</VersionPrefix>
-    <VersionSuffix>preview</VersionSuffix>
+    <VersionSuffix></VersionSuffix>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>$(VersionPrefix)</FileVersion>
     <InformationalVersion>$(VersionPrefix)</InformationalVersion>
